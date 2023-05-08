@@ -8,6 +8,8 @@ from typing import List, Dict, Union, Optional
 import orjson
 from dotenv import load_dotenv
 
+from utils import wikipedia_search_lookup
+
 load_dotenv()
 
 
@@ -37,7 +39,7 @@ class ChatMessage(BaseModel):
 
 class ChatSession(BaseModel):
     id: Optional[Union[str, UUID]] = Field(default_factory=uuid4)
-    created: datetime.datetime = Field(default_factory=now_tz)
+    created_at: datetime.datetime = Field(default_factory=now_tz)
     api_key: SecretStr
     api_url: HttpUrl
     model: str
@@ -62,13 +64,10 @@ class AIChat(BaseModel):
         json_loads = orjson.loads
         json_dumps = orjson_dumps
 
-    def __init__(self, **kwargs):
+    def __init__(self, character: str = None, system_prompt: str = None, **kwargs):
 
         client = Client()
-
-        system_prompt = (
-            "You are a helpful assistant who only replies in cryptic riddles."
-        )
+        system_prompt = self.build_system_prompt(character, system_prompt)
 
         new_session = ChatSession(
             system_prompt=system_prompt,
@@ -119,6 +118,8 @@ class AIChat(BaseModel):
 
         sess.messages.append([user_message, assistant_message])
 
+        return r["choices"][0]["message"]["content"]
+
     def __str__(self):
         if self.default_session:
             return self.default_session.json(
@@ -127,8 +128,30 @@ class AIChat(BaseModel):
                 option=orjson.OPT_INDENT_2,
             )
 
+    def build_system_prompt(self, character: str = None, system_prompt: str = None):
+        default = "You are a helpful assistant."
+        if character:
+            character_prompt = """
+            You are the following character and should speak as they would: {0}
+            """
+            prompt = character_prompt.format(wikipedia_search_lookup(character)).strip()
+            if system_prompt:
+                character_system_prompt = """
+                You MUST also follow this rule: {0}
+                """
+                prompt = (
+                    prompt
+                    + "\n\n"
+                    + character_system_prompt.format(system_prompt).strip()
+                )
+            return prompt
+        elif system_prompt:
+            return system_prompt
+        else:
+            return default
+
 
 if __name__ == "__main__":
-    ai = AIChat()
-    ai("What is the capital of the United States?")
-    print(ai)
+    ai = AIChat("Steve Jobs", "Speak only in emoji.")
+    m = ai("What is your favorite product?")
+    print(m)
