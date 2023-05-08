@@ -53,7 +53,7 @@ class ChatSession(BaseModel):
 
 class AIChatModel(BaseModel):
     client: Union[Client, AsyncClient]
-    default_session_id: Optional[Union[str, UUID]]
+    default_session: Optional[ChatSession]
     sessions: Dict[Union[str, UUID], ChatSession] = {}
 
     class Config:
@@ -73,13 +73,12 @@ if __name__ == "__main__":
         model="gpt-3.5-turbo",
     )
 
-    ai.default_session_id = new_session.id
+    ai.default_session = new_session
     ai.sessions[new_session.id] = new_session
 
     prompt = "What is the capital of the United States?"
 
-    sess_key = ai.default_session_id
-    sess = ai.sessions[sess_key]
+    sess = ai.default_session
 
     headers = {
         "Content-Type": "application/json",
