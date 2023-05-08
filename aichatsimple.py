@@ -88,7 +88,7 @@ class AIChat(BaseModel):
         if character:
             self.interactive_console(prime=True)
 
-    def __call__(self, prompt: str):
+    def __call__(self, prompt: str) -> str:
         sess = self.default_session
 
         headers = {
@@ -125,24 +125,20 @@ class AIChat(BaseModel):
 
         return r["choices"][0]["message"]["content"]
 
-    def __str__(self):
-        if self.default_session:
-            return self.default_session.json(
-                exclude={"api_key", "api_url"},
-                exclude_none=True,
-                option=orjson.OPT_INDENT_2,
-            )
-
-    def build_system_prompt(self, character: str = None, system_prompt: str = None):
+    def build_system_prompt(
+        self, character: str = None, system_prompt: str = None
+    ) -> str:
         default = "You are a helpful assistant."
         if character:
             character_prompt = """
             You are the following character and should speak as they would: {0}
+
+            Introduce yourself first.
             """
             prompt = character_prompt.format(wikipedia_search_lookup(character)).strip()
             if system_prompt:
                 character_system_prompt = """
-                You MUST also follow this rule: {0}
+                You MUST obey the following rule at all times: {0}
                 """
                 prompt = (
                     prompt
@@ -155,8 +151,8 @@ class AIChat(BaseModel):
         else:
             return default
 
-    def interactive_console(self, prime: bool = True):
-        console = Console(width=60, highlight=False)
+    def interactive_console(self, prime: bool = True) -> None:
+        console = Console(width=40, highlight=False)
 
         # prime with a unique starting response to the user
         if prime:
@@ -165,7 +161,7 @@ class AIChat(BaseModel):
 
         while True:
             try:
-                user_input = console.input("Input Message: ")
+                user_input = console.input("You: ").strip()
             except KeyboardInterrupt:
                 break
             if not user_input:
@@ -173,3 +169,14 @@ class AIChat(BaseModel):
 
             ai_response = self(user_input)
             console.print(ai_response, style="bright_magenta")
+
+    def __str__(self) -> str:
+        if self.default_session:
+            return self.default_session.json(
+                exclude={"api_key", "api_url"},
+                exclude_none=True,
+                option=orjson.OPT_INDENT_2,
+            )
+
+    def __repr__(self) -> str:
+        return ""

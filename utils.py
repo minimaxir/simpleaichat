@@ -20,11 +20,11 @@ def wikipedia_search(query: str, n: int = 1) -> Union[str, List[str]]:
     return results[0] if n == 1 else results
 
 
-def wikipedia_lookup(query: str) -> str:
+def wikipedia_lookup(query: str, sentences: int = 1) -> str:
     LOOKUP_PARAMS = {
         "action": "query",
         "prop": "extracts",
-        "exsentences": "2",
+        "exsentences": sentences,
         "exlimit": "1",
         "explaintext": "1",
         "formatversion": "2",
@@ -36,5 +36,5 @@ def wikipedia_lookup(query: str) -> str:
     return r_lookup.json()["query"]["pages"][0]["extract"]
 
 
-def wikipedia_search_lookup(query: str) -> str:
-    return wikipedia_lookup(wikipedia_search(query, 1))
+def wikipedia_search_lookup(query: str, sentences: int = 1) -> str:
+    return wikipedia_lookup(wikipedia_search(query, 1), sentences)
