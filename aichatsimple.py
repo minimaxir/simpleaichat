@@ -116,7 +116,8 @@ class AIChat(BaseModel):
             total_tokens=r["usage"]["total_tokens"],
         )
 
-        sess.messages.append([user_message, assistant_message])
+        sess.messages.append(user_message)
+        sess.messages.append(assistant_message)
 
         return r["choices"][0]["message"]["content"]
 
