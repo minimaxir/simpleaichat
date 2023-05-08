@@ -2,3 +2,4 @@
 .DS_Store
 test_notebooks/
 .vscode/
+__pycache__/
