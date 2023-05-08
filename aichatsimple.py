@@ -7,6 +7,7 @@ from httpx import Client, AsyncClient
 from typing import List, Dict, Union, Optional
 import orjson
 from dotenv import load_dotenv
+from rich.console import Console
 
 from utils import wikipedia_search_lookup
 
@@ -84,6 +85,9 @@ class AIChat(BaseModel):
             client=client, default_session=default_session, sessions=sessions
         )
 
+        if character:
+            self.interactive_console(prime=True)
+
     def __call__(self, prompt: str):
         sess = self.default_session
 
@@ -151,8 +155,21 @@ class AIChat(BaseModel):
         else:
             return default
 
+    def interactive_console(self, prime: bool = True):
+        console = Console(width=60, highlight=False)
 
-if __name__ == "__main__":
-    ai = AIChat("Steve Jobs", "Speak only in emoji.")
-    m = ai("What is your favorite product?")
-    print(m)
+        # prime with a unique starting response to the user
+        if prime:
+            ai_response = self("Hello!")
+            console.print(ai_response, style="bright_magenta")
+
+        while True:
+            try:
+                user_input = console.input("Input Message: ")
+            except KeyboardInterrupt:
+                break
+            if not user_input:
+                break
+
+            ai_response = self(user_input)
+            console.print(ai_response, style="bright_magenta")
