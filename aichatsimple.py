@@ -173,7 +173,8 @@ class AIChat(BaseModel):
             if not user_input:
                 break
 
-            ai_response = self(user_input)
+            with console.status("", spinner="point"):
+                ai_response = self(user_input)
             console.print(f"[b]{character}[/b]: {ai_response}", style="bright_magenta")
 
     def __str__(self) -> str:
