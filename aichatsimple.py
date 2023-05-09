@@ -65,7 +65,13 @@ class AIChat(BaseModel):
         json_loads = orjson.loads
         json_dumps = orjson_dumps
 
-    def __init__(self, character: str = None, system_prompt: str = None, **kwargs):
+    def __init__(
+        self,
+        character: str = None,
+        system_prompt: str = None,
+        prime: bool = True,
+        **kwargs,
+    ):
 
         client = Client()
         system_prompt = self.build_system_prompt(character, system_prompt)
@@ -86,7 +92,7 @@ class AIChat(BaseModel):
         )
 
         if character:
-            self.interactive_console(prime=True)
+            self.interactive_console(character=character, prime=prime)
 
     def __call__(self, prompt: str) -> str:
         sess = self.default_session
@@ -151,24 +157,24 @@ class AIChat(BaseModel):
         else:
             return default
 
-    def interactive_console(self, prime: bool = True) -> None:
+    def interactive_console(self, character: str = None, prime: bool = True) -> None:
         console = Console(width=40, highlight=False)
 
         # prime with a unique starting response to the user
         if prime:
             ai_response = self("Hello!")
-            console.print(ai_response, style="bright_magenta")
+            console.print(f"[b]{character}[/b]: {ai_response}", style="bright_magenta")
 
         while True:
             try:
-                user_input = console.input("You: ").strip()
+                user_input = console.input("[b]You:[/b] ").strip()
             except KeyboardInterrupt:
                 break
             if not user_input:
                 break
 
             ai_response = self(user_input)
-            console.print(ai_response, style="bright_magenta")
+            console.print(f"[b]{character}[/b]: {ai_response}", style="bright_magenta")
 
     def __str__(self) -> str:
         if self.default_session:
