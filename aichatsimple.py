@@ -29,9 +29,9 @@ class ChatMessage(BaseModel):
     role: str
     content: str
     received_at: datetime.datetime = Field(default_factory=now_tz)
-    prompt_tokens: Optional[int]
-    completion_tokens: Optional[int]
-    total_tokens: Optional[int]
+    prompt_length: Optional[int]
+    completion_length: Optional[int]
+    total_length: Optional[int]
 
     class Config:
         json_loads = orjson.loads
@@ -47,7 +47,7 @@ class ChatSession(BaseModel):
     system_prompt: str
     think_prompt: Optional[str]
     temperature: float = 0.7
-    max_tokens: int = None
+    max_length: int = None
     messages: List[ChatMessage] = []
 
     class Config:
@@ -121,9 +121,9 @@ class AIChat(BaseModel):
         assistant_message = ChatMessage(
             role=r["choices"][0]["message"]["role"],
             content=r["choices"][0]["message"]["content"],
-            prompt_tokens=r["usage"]["prompt_tokens"],
-            completion_tokens=r["usage"]["completion_tokens"],
-            total_tokens=r["usage"]["total_tokens"],
+            prompt_length=r["usage"]["prompt_tokens"],
+            completion_length=r["usage"]["completion_tokens"],
+            total_length=r["usage"]["total_tokens"],
         )
 
         sess.messages.append(user_message)
