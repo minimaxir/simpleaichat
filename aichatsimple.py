@@ -187,3 +187,25 @@ class AIChat(BaseModel):
 
     def __repr__(self) -> str:
         return ""
+
+    # Tabulators for returning total token counts
+    def message_totals(self, attr, key=None) -> int:
+        sess = self.sessions[key] if key else self.default_session
+        return sum([x.dict().get(attr, 0)] for x in sess.messages)
+
+    @property
+    def total_prompt_length(self, key=None) -> int:
+        return self.message_totals("prompt_length", key=key)
+
+    @property
+    def total_completion_length(self, key=None) -> int:
+        return self.message_totals("completion_length", key=key)
+
+    @property
+    def total_length(self, key=None) -> int:
+        return self.message_totals("total_length", key=key)
+
+    # alias total_tokens to total_length for easy
+    @property
+    def total_tokens(self, key=None) -> int:
+        return self.total_length(key=key)
