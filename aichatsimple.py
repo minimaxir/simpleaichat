@@ -94,8 +94,11 @@ class AIChat(BaseModel):
         if character:
             self.interactive_console(character=character, prime=prime)
 
-    def __call__(self, prompt: str) -> str:
-        sess = self.default_session
+    def get_session(self, key: Union[str, UUID] = None) -> ChatSession:
+        return self.sessions[key] if key else self.default_session
+
+    def __call__(self, prompt: str, key: Union[str, UUID] = None) -> str:
+        sess = self.get_session(key)
 
         headers = {
             "Content-Type": "application/json",
@@ -189,23 +192,23 @@ class AIChat(BaseModel):
         return ""
 
     # Tabulators for returning total token counts
-    def message_totals(self, attr, key=None) -> int:
-        sess = self.sessions[key] if key else self.default_session
+    def message_totals(self, attr: str, key: Union[str, UUID] = None) -> int:
+        sess = self.get_session(key)
         return sum([x.dict().get(attr, 0)] for x in sess.messages)
 
     @property
-    def total_prompt_length(self, key=None) -> int:
+    def total_prompt_length(self, key: Union[str, UUID] = None) -> int:
         return self.message_totals("prompt_length", key=key)
 
     @property
-    def total_completion_length(self, key=None) -> int:
+    def total_completion_length(self, key: Union[str, UUID] = None) -> int:
         return self.message_totals("completion_length", key=key)
 
     @property
-    def total_length(self, key=None) -> int:
+    def total_length(self, key: Union[str, UUID] = None) -> int:
         return self.message_totals("total_length", key=key)
 
     # alias total_tokens to total_length for easy
     @property
-    def total_tokens(self, key=None) -> int:
+    def total_tokens(self, key: Union[str, UUID] = None) -> int:
         return self.total_length(key=key)
