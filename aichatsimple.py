@@ -37,6 +37,9 @@ class ChatMessage(BaseModel):
         json_loads = orjson.loads
         json_dumps = orjson_dumps
 
+    def __str__(self) -> str:
+        return self.content
+
 
 class ChatSession(BaseModel):
     id: Optional[Union[str, UUID]] = Field(default_factory=uuid4)
@@ -53,6 +56,13 @@ class ChatSession(BaseModel):
     class Config:
         json_loads = orjson.loads
         json_dumps = orjson_dumps
+
+    def __str__(self) -> str:
+        sess_start_str = self.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        last_message_str = self.messages[-1].received_at.strftime("%Y-%m-%d %H:%M:%S")
+        return f"""Chat session started at {sess_start_str}:
+        - {len(self.messages):,} Messages
+        - Last message sent at {last_message_str})"""
 
 
 class AIChat(BaseModel):
