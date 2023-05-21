@@ -2,7 +2,7 @@ import os
 import datetime
 from uuid import uuid4, UUID
 
-from pydantic import BaseModel, SecretStr, Field
+from pydantic import BaseModel, SecretStr, HttpUrl, Field
 from httpx import Client, AsyncClient
 from typing import List, Dict, Union, Optional, Set
 import orjson
@@ -45,6 +45,7 @@ class ChatSession(BaseModel):
     id: Union[str, UUID] = Field(default_factory=uuid4)
     created_at: datetime.datetime = Field(default_factory=now_tz)
     auth: Dict[str, SecretStr]
+    api_url: HttpUrl
     model: str
     system_prompt: str
     think_prompt: Optional[str]
@@ -103,7 +104,7 @@ class ChatGPTSession(ChatSession):
         }
 
         r = client.post(
-            self.auth["api_url"].get_secret_value(),
+            self.api_url,
             json=data,
             headers=headers,
             timeout=20,
@@ -181,8 +182,8 @@ class AIChat(BaseModel):
                 system_prompt=system_prompt,
                 auth={
                     "api_key": gpt_api_key,
-                    "api_url": "https://api.openai.com/v1/chat/completions",
                 },
+                api_url="https://api.openai.com/v1/chat/completions",
                 model=model,
                 input_fields={"role", "content"},
             )
