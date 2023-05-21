@@ -4,7 +4,7 @@ from uuid import uuid4, UUID
 
 from pydantic import BaseModel, SecretStr, HttpUrl, Field
 from httpx import Client, AsyncClient
-from typing import List, Dict, Union, Optional, Set
+from typing import List, Dict, Union, Optional, Set, Any
 import orjson
 from dotenv import load_dotenv
 from rich.console import Console
@@ -48,9 +48,7 @@ class ChatSession(BaseModel):
     api_url: HttpUrl
     model: str
     system_prompt: str
-    think_prompt: Optional[str]
-    temperature: float = 0.7
-    max_length: int = None
+    params: Dict[str, Any] = {"temperature": 0.7}
     messages: List[ChatMessage] = []
     input_fields: Set[str] = {}
     recent_messages: Optional[int] = None
@@ -102,8 +100,7 @@ class ChatGPTSession(ChatSession):
         data = {
             "model": self.model,
             "messages": self.format_input_messages(system_message, user_message),
-            "temperature": self.temperature,
-            "max_tokens": self.max_length,
+            **self.params,
         }
 
         r = client.post(
