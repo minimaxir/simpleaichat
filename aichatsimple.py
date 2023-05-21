@@ -42,7 +42,7 @@ class ChatMessage(BaseModel):
 
 
 class ChatSession(BaseModel):
-    id: Optional[Union[str, UUID]] = Field(default_factory=uuid4)
+    id: Union[str, UUID] = Field(default_factory=uuid4)
     created_at: datetime.datetime = Field(default_factory=now_tz)
     api_key: SecretStr
     api_url: HttpUrl
@@ -65,6 +65,47 @@ class ChatSession(BaseModel):
         - Last message sent at {last_message_str})"""
 
 
+class ChatGPTSession(ChatSession):
+    def __call__(
+        self,
+        prompt: str,
+        client: Union[Client, AsyncClient],
+        save_messages: bool = True,
+    ) -> str:
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key.get_secret_value()}",
+        }
+
+        system_message = [{"role": "system", "content": self.system_prompt}]
+        user_message = ChatMessage(role="user", content=prompt)
+
+        data = {
+            "model": self.model,
+            "messages": system_message
+            + [m.dict(include={"role", "content"}) for m in self.messages]
+            + [user_message.dict(include={"role", "content"})],
+            "temperature": self.temperature,
+            "max_tokens": self.max_length,
+        }
+
+        r = client.post(self.api_url, json=data, headers=headers, timeout=10).json()
+
+        assistant_message = ChatMessage(
+            role=r["choices"][0]["message"]["role"],
+            content=r["choices"][0]["message"]["content"],
+            prompt_length=r["usage"]["prompt_tokens"],
+            completion_length=r["usage"]["completion_tokens"],
+            total_length=r["usage"]["total_tokens"],
+        )
+
+        if save_messages:
+            self.messages.append(user_message)
+            self.messages.append(assistant_message)
+
+        return r["choices"][0]["message"]["content"]
+
+
 class AIChat(BaseModel):
     client: Union[Client, AsyncClient]
     default_session: Optional[ChatSession]
@@ -80,22 +121,22 @@ class AIChat(BaseModel):
         character: str = None,
         system_prompt: str = None,
         prime: bool = True,
+        model: str = "gpt-3.5-turbo",
+        is_async: bool = False,
+        api_key: str = None,
+        session_id: Union[str, UUID] = uuid4(),
         **kwargs,
     ):
 
-        client = Client()
+        client = Client() if not is_async else AsyncClient()
         system_prompt = self.build_system_prompt(character, system_prompt)
 
-        new_session = ChatSession(
-            system_prompt=system_prompt,
-            api_key=os.getenv("OPENAI_API_KEY"),
-            api_url="https://api.openai.com/v1/chat/completions",
-            model="gpt-3.5-turbo",
+        new_session = self.new_session(
+            model, system_prompt, api_key, session_id, return_session=True
         )
 
-        sessions = {}
         default_session = new_session
-        sessions[new_session.id] = new_session
+        sessions = {new_session.id: new_session}
 
         super().__init__(
             client=client, default_session=default_session, sessions=sessions
@@ -104,45 +145,43 @@ class AIChat(BaseModel):
         if character:
             self.interactive_console(character=character, prime=prime)
 
-    def get_session(self, key: Union[str, UUID] = None) -> ChatSession:
-        return self.sessions[key] if key else self.default_session
+    def new_session(
+        self,
+        model,
+        system_prompt: str = None,
+        api_key: str = None,
+        session_id: Union[str, UUID] = uuid4(),
+        return_session: bool = False,
+    ) -> Optional[ChatGPTSession]:
 
-    def __call__(self, prompt: str, key: Union[str, UUID] = None) -> str:
-        sess = self.get_session(key)
+        # TODO: Add support for more models (PaLM, Claude)
+        if "gpt-" in model:
+            gpt_api_key = os.getenv("OPENAI_API_KEY") or api_key
+            assert gpt_api_key, f"An API key for {model} was not defined."
+            sess = ChatGPTSession(
+                id=session_id,
+                system_prompt=system_prompt,
+                api_key=gpt_api_key,
+                api_url="https://api.openai.com/v1/chat/completions",
+                model=model,
+            )
 
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {sess.api_key.get_secret_value()}",
-        }
+        if return_session:
+            return sess
+        else:
+            self.sessions[sess.id] = sess
 
-        system_message = [{"role": "system", "content": sess.system_prompt}]
-        user_message = ChatMessage(role="user", content=prompt)
+    def get_session(self, session_id: Union[str, UUID] = None) -> ChatSession:
+        return self.sessions[session_id] if session_id else self.default_session
 
-        data = {
-            "model": sess.model,
-            "messages": system_message
-            + [m.dict(include={"role", "content"}) for m in sess.messages]
-            + [user_message.dict(include={"role", "content"})],
-            "temperature": sess.temperature,
-            "max_tokens": sess.max_tokens,
-        }
-
-        r = self.client.post(
-            sess.api_url, json=data, headers=headers, timeout=10
-        ).json()
-
-        assistant_message = ChatMessage(
-            role=r["choices"][0]["message"]["role"],
-            content=r["choices"][0]["message"]["content"],
-            prompt_length=r["usage"]["prompt_tokens"],
-            completion_length=r["usage"]["completion_tokens"],
-            total_length=r["usage"]["total_tokens"],
-        )
-
-        sess.messages.append(user_message)
-        sess.messages.append(assistant_message)
-
-        return r["choices"][0]["message"]["content"]
+    def __call__(
+        self,
+        prompt: str,
+        session_id: Union[str, UUID] = None,
+        save_messages: bool = True,
+    ) -> str:
+        sess = self.get_session(session_id)
+        return sess(prompt, client=self.client, save_messages=save_messages)
 
     def build_system_prompt(
         self, character: str = None, system_prompt: str = None
@@ -172,10 +211,11 @@ class AIChat(BaseModel):
 
     def interactive_console(self, character: str = None, prime: bool = True) -> None:
         console = Console(width=40, highlight=False)
+        sess = self.default_session
 
         # prime with a unique starting response to the user
         if prime:
-            ai_response = self("Hello!")
+            ai_response = sess("Hello!", self.client)
             console.print(f"[b]{character}[/b]: {ai_response}", style="bright_magenta")
 
         while True:
@@ -187,7 +227,7 @@ class AIChat(BaseModel):
                 break
 
             with console.status("", spinner="point"):
-                ai_response = self(user_input)
+                ai_response = sess(user_input, self.client)
             console.print(f"[b]{character}[/b]: {ai_response}", style="bright_magenta")
 
     def __str__(self) -> str:
@@ -202,23 +242,23 @@ class AIChat(BaseModel):
         return ""
 
     # Tabulators for returning total token counts
-    def message_totals(self, attr: str, key: Union[str, UUID] = None) -> int:
-        sess = self.get_session(key)
+    def message_totals(self, attr: str, session_id: Union[str, UUID] = None) -> int:
+        sess = self.get_session(session_id)
         return sum([x.dict().get(attr, 0)] for x in sess.messages)
 
     @property
-    def total_prompt_length(self, key: Union[str, UUID] = None) -> int:
-        return self.message_totals("prompt_length", key=key)
+    def total_prompt_length(self, session_id: Union[str, UUID] = None) -> int:
+        return self.message_totals("prompt_length", session_id)
 
     @property
-    def total_completion_length(self, key: Union[str, UUID] = None) -> int:
-        return self.message_totals("completion_length", key=key)
+    def total_completion_length(self, session_id: Union[str, UUID] = None) -> int:
+        return self.message_totals("completion_length", session_id)
 
     @property
-    def total_length(self, key: Union[str, UUID] = None) -> int:
-        return self.message_totals("total_length", key=key)
+    def total_length(self, session_id: Union[str, UUID] = None) -> int:
+        return self.message_totals("total_length", session_id)
 
-    # alias total_tokens to total_length for easy
+    # alias total_tokens to total_length for common use
     @property
-    def total_tokens(self, key: Union[str, UUID] = None) -> int:
-        return self.total_length(key=key)
+    def total_tokens(self, session_id: Union[str, UUID] = None) -> int:
+        return self.total_length(session_id)
