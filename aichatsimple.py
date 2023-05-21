@@ -4,7 +4,7 @@ from uuid import uuid4, UUID
 
 from pydantic import BaseModel, SecretStr, HttpUrl, Field
 from httpx import Client, AsyncClient
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union, Optional, Set
 import orjson
 from dotenv import load_dotenv
 from rich.console import Console
@@ -52,6 +52,8 @@ class ChatSession(BaseModel):
     temperature: float = 0.7
     max_length: int = None
     messages: List[ChatMessage] = []
+    input_fields: Set[str] = {}
+    recent_messages: Optional[int] = None
 
     class Config:
         json_loads = orjson.loads
@@ -63,6 +65,20 @@ class ChatSession(BaseModel):
         return f"""Chat session started at {sess_start_str}:
         - {len(self.messages):,} Messages
         - Last message sent at {last_message_str})"""
+
+    def format_input_messages(
+        self, system_message: ChatMessage, user_message: ChatMessage
+    ) -> list:
+        recent_messages = (
+            self.messages[-self.recent_messages :]
+            if self.recent_messages
+            else self.messages
+        )
+        return (
+            [system_message.dict(include=self.input_fields)]
+            + [m.dict(include=self.input_fields) for m in recent_messages]
+            + [user_message.dict(include=self.input_fields)]
+        )
 
 
 class ChatGPTSession(ChatSession):
@@ -77,14 +93,12 @@ class ChatGPTSession(ChatSession):
             "Authorization": f"Bearer {self.api_key.get_secret_value()}",
         }
 
-        system_message = [{"role": "system", "content": self.system_prompt}]
+        system_message = ChatMessage(role="system", content=self.system_prompt)
         user_message = ChatMessage(role="user", content=prompt)
 
         data = {
             "model": self.model,
-            "messages": system_message
-            + [m.dict(include={"role", "content"}) for m in self.messages]
-            + [user_message.dict(include={"role", "content"})],
+            "messages": self.format_input_messages(system_message, user_message),
             "temperature": self.temperature,
             "max_tokens": self.max_length,
         }
@@ -164,6 +178,7 @@ class AIChat(BaseModel):
                 api_key=gpt_api_key,
                 api_url="https://api.openai.com/v1/chat/completions",
                 model=model,
+                input_fields={"role", "content"},
             )
 
         if return_session:
@@ -191,7 +206,7 @@ class AIChat(BaseModel):
             character_prompt = """
             You are the following character and should speak as they would: {0}
 
-            Introduce yourself first.
+            Concisely introduce yourself first.
             """
             prompt = character_prompt.format(wikipedia_search_lookup(character)).strip()
             if system_prompt:
