@@ -82,6 +82,9 @@ class ChatSession(BaseModel):
 
 
 class ChatGPTSession(ChatSession):
+    api_url: HttpUrl = "https://api.openai.com/v1/chat/completions"
+    input_fields: Set[str] = {"role", "content"}
+
     def __call__(
         self,
         prompt: str,
@@ -183,9 +186,7 @@ class AIChat(BaseModel):
                 auth={
                     "api_key": gpt_api_key,
                 },
-                api_url="https://api.openai.com/v1/chat/completions",
                 model=model,
-                input_fields={"role", "content"},
             )
 
         if return_session:
