@@ -2,7 +2,7 @@ import os
 import datetime
 from uuid import uuid4, UUID
 
-from pydantic import BaseModel, SecretStr, HttpUrl, Field
+from pydantic import BaseModel, SecretStr, Field
 from httpx import Client, AsyncClient
 from typing import List, Dict, Union, Optional, Set
 import orjson
@@ -44,8 +44,7 @@ class ChatMessage(BaseModel):
 class ChatSession(BaseModel):
     id: Union[str, UUID] = Field(default_factory=uuid4)
     created_at: datetime.datetime = Field(default_factory=now_tz)
-    api_key: SecretStr
-    api_url: HttpUrl
+    auth: Dict[str, SecretStr]
     model: str
     system_prompt: str
     think_prompt: Optional[str]
@@ -90,7 +89,7 @@ class ChatGPTSession(ChatSession):
     ) -> str:
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key.get_secret_value()}",
+            "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
         }
 
         system_message = ChatMessage(role="system", content=self.system_prompt)
@@ -103,7 +102,12 @@ class ChatGPTSession(ChatSession):
             "max_tokens": self.max_length,
         }
 
-        r = client.post(self.api_url, json=data, headers=headers, timeout=10).json()
+        r = client.post(
+            self.auth["api_url"].get_secret_value(),
+            json=data,
+            headers=headers,
+            timeout=20,
+        ).json()
 
         assistant_message = ChatMessage(
             role=r["choices"][0]["message"]["role"],
@@ -175,8 +179,10 @@ class AIChat(BaseModel):
             sess = ChatGPTSession(
                 id=session_id,
                 system_prompt=system_prompt,
-                api_key=gpt_api_key,
-                api_url="https://api.openai.com/v1/chat/completions",
+                auth={
+                    "api_key": gpt_api_key,
+                    "api_url": "https://api.openai.com/v1/chat/completions",
+                },
                 model=model,
                 input_fields={"role", "content"},
             )
