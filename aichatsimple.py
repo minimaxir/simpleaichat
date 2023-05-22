@@ -194,6 +194,17 @@ class AIChat(BaseModel):
     def get_session(self, session_id: Union[str, UUID] = None) -> ChatSession:
         return self.sessions[session_id] if session_id else self.default_session
 
+    def reset_session(self, session_id: Union[str, UUID] = None) -> None:
+        sess = self.get_session(session_id)
+        sess.messages = []
+
+    def delete_session(self, session_id: Union[str, UUID] = None) -> None:
+        sess = self.get_session(session_id)
+        if sess.id == self.default_session.id:
+            self.default_session = None
+        del self.sessions[sess.id]
+        del sess
+
     def __call__(
         self,
         prompt: str,
