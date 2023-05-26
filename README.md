@@ -73,7 +73,7 @@ You can also save chat sessions (as JSON) and load them later.
 A large number of popular venture-capital-funded ChatGPT apps don't actually use the "chat" part of the model. Instead, they just use the system prompt/first user prompt as a form of natural language programming. You can emulate this behavior by passing a new system prompt when generating text, and not saving the resulting messages.
 
 ```py3
-json = "{'title': 'An array of integers.', 'array': [-1, 0, 1, 2, 3]}"
+json = "{'title': 'An array of integers.', 'array': [-1, 0, 1]}"
 functions = [
              "Format the user-provided JSON as YAML.",
              "Write a 5/7/5 haiku based on the user-provided JSON.",

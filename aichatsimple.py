@@ -155,16 +155,20 @@ class AIChat(BaseModel):
         is_async: bool = False,
         api_key: str = None,
         id: Union[str, UUID] = uuid4(),
+        default_session: bool = True,
         **kwargs,
     ):
 
         client = Client() if not is_async else AsyncClient()
         system = self.build_system(character, system)
 
-        new_session = self.new_session(model, system, api_key, id, return_session=True)
+        if default_session:
+            new_session = self.new_session(
+                model, system, api_key, id, return_session=True
+            )
 
-        default_session = new_session
-        sessions = {new_session.id: new_session}
+            default_session = new_session
+            sessions = {new_session.id: new_session}
 
         super().__init__(
             client=client, default_session=default_session, sessions=sessions
@@ -201,7 +205,13 @@ class AIChat(BaseModel):
             self.sessions[sess.id] = sess
 
     def get_session(self, id: Union[str, UUID] = None) -> ChatSession:
-        return self.sessions[id] if id else self.default_session
+        try:
+            sess = self.sessions[id] if id else self.default_session
+        except KeyError:
+            raise KeyError("No session by that key exists.")
+        if not sess:
+            raise ValueError("No default session exists.")
+        return sess
 
     def reset_session(self, id: Union[str, UUID] = None) -> None:
         sess = self.get_session(id)
