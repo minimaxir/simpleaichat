@@ -47,7 +47,7 @@ The trick with working with new chat-based apps that wasn't readily available wi
 For developers, you can instantiate a programmatic instance of `AIChat` by explicitly specifying a system prompt, or by disabling the console app.
 
 ```py3
-ai = AIChat(system_prompt="You are a helpful assistant")
+ai = AIChat(system="You are a helpful assistant")
 ai = AIChat(console=False)  # same as above
 ```
 
@@ -63,31 +63,35 @@ Future inputs to the `ai` object by default
 In actuality, the `AIChat` class is a manager of chat _sessions_, which means you can have multiple independent chats happening! The examples above use a default session, but you can create new ones by specifying a `session_key` when calling `ai`.
 
 ```py3
-ai.new_session(session_key="conv1")
+ai.new_session(id="conv1")
 ```
 
 You can also save chat sessions (as JSON) and load them later.
 
 ### Functions
 
-A large number of ChatGPT-based apps don't actually use the "chat" part of the model. Instead, they just use the system prompt/first user prompt as a form of natural language programming. simpleaichat has a special mode which lets you create such functions without any overhead. And even better, you can create multiple functions within a single AIChat!
+A large number of popular venture-capital-funded ChatGPT apps don't actually use the "chat" part of the model. Instead, they just use the system prompt/first user prompt as a form of natural language programming. You can emulate this behavior by passing a new system prompt when generating text, and not saving the resulting messages.
 
 ```py3
-func1 = "Format the user-provided JSON as YAML."
-func2 = "Write a 5/7/5 haiku based on the user-provided JSON."
-func3 = "Translate the values in the user-provided JSON from English to French."
+json = "{'title': 'An array of integers.', 'array': [-1, 0, 1, 2, 3]}"
+functions = [
+             "Format the user-provided JSON as YAML.",
+             "Write a 5/7/5 haiku based on the user-provided JSON.",
+             "Translate only the values in the user-provided JSON from English to French."
+            ]
+params = {"temperature": 0.0, "max_tokens": 100}  # a temperature of 0.0 is deterministic
 
-json = "{}"
-
-ai = AIChat(functions=[func1, func2, func3])
-ai(json, function=func1)
-ai(json, function=func2)
-ai(json, function=func3)
+# We namespace the function by `id` so it doesn't affect other chats.
+# Settings set during session creation will apply to all generations from the session,
+# but you can change them per-generation, as is the case with the `system` prompt here.
+ai = AIChat(id="function", params=params, save_messages=False)
+for function in functions:
+    ai(json, id="function", system=function)
 ```
 
 ## Tools
 
-One of the most recent aspects of interacting with ChatGPT is the ability for the model to use "tools." As defined from the ReAct paper, tools allow the model to decide when to use custom functions, which can extend beyond just the chat app.
+One of the most recent aspects of interacting with ChatGPT is the ability for the model to use "tools." As defined from the ReAct paper, tools allow the model to decide when to use custom functions, which can extend beyond just the chat app. This workflow is analogous to ChatGPT Plugins.
 
 Using tools typically requires a number of shennanigans, but simpleaichat uses a neat trick to make it fast and easy!
 

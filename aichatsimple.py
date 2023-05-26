@@ -47,11 +47,12 @@ class ChatSession(BaseModel):
     auth: Dict[str, SecretStr]
     api_url: HttpUrl
     model: str
-    system_prompt: str
+    system: str
     params: Dict[str, Any] = {"temperature": 0.7}
     messages: List[ChatMessage] = []
     input_fields: Set[str] = {}
     recent_messages: Optional[int] = None
+    save_messages: bool = True
 
     class Config:
         json_loads = orjson.loads
@@ -87,20 +88,23 @@ class ChatGPTSession(ChatSession):
         self,
         prompt: str,
         client: Union[Client, AsyncClient],
+        system: str = None,
         save_messages: bool = True,
+        params: Dict[str, Any] = None,
     ) -> str:
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
         }
 
-        system_message = ChatMessage(role="system", content=self.system_prompt)
+        system_message = ChatMessage(role="system", content=system or self.system)
         user_message = ChatMessage(role="user", content=prompt)
 
+        gen_params = params or self.params
         data = {
             "model": self.model,
             "messages": self.format_input_messages(system_message, user_message),
-            **self.params,
+            **gen_params,
         }
 
         r = client.post(
@@ -118,7 +122,7 @@ class ChatGPTSession(ChatSession):
             total_length=r["usage"]["total_tokens"],
         )
 
-        if save_messages:
+        if save_messages or self.save_messages:
             self.messages.append(user_message)
             self.messages.append(assistant_message)
 
@@ -138,21 +142,19 @@ class AIChat(BaseModel):
     def __init__(
         self,
         character: str = None,
-        system_prompt: str = None,
+        system: str = None,
         prime: bool = True,
         model: str = "gpt-3.5-turbo",
         is_async: bool = False,
         api_key: str = None,
-        session_id: Union[str, UUID] = uuid4(),
+        id: Union[str, UUID] = uuid4(),
         **kwargs,
     ):
 
         client = Client() if not is_async else AsyncClient()
-        system_prompt = self.build_system_prompt(character, system_prompt)
+        system = self.build_system(character, system)
 
-        new_session = self.new_session(
-            model, system_prompt, api_key, session_id, return_session=True
-        )
+        new_session = self.new_session(model, system, api_key, id, return_session=True)
 
         default_session = new_session
         sessions = {new_session.id: new_session}
@@ -167,9 +169,9 @@ class AIChat(BaseModel):
     def new_session(
         self,
         model,
-        system_prompt: str = None,
+        system: str = None,
         api_key: str = None,
-        session_id: Union[str, UUID] = uuid4(),
+        id: Union[str, UUID] = uuid4(),
         return_session: bool = False,
     ) -> Optional[ChatGPTSession]:
 
@@ -178,8 +180,8 @@ class AIChat(BaseModel):
             gpt_api_key = os.getenv("OPENAI_API_KEY") or api_key
             assert gpt_api_key, f"An API key for {model} was not defined."
             sess = ChatGPTSession(
-                id=session_id,
-                system_prompt=system_prompt,
+                id=id,
+                system=system,
                 auth={
                     "api_key": gpt_api_key,
                 },
@@ -191,15 +193,15 @@ class AIChat(BaseModel):
         else:
             self.sessions[sess.id] = sess
 
-    def get_session(self, session_id: Union[str, UUID] = None) -> ChatSession:
-        return self.sessions[session_id] if session_id else self.default_session
+    def get_session(self, id: Union[str, UUID] = None) -> ChatSession:
+        return self.sessions[id] if id else self.default_session
 
-    def reset_session(self, session_id: Union[str, UUID] = None) -> None:
-        sess = self.get_session(session_id)
+    def reset_session(self, id: Union[str, UUID] = None) -> None:
+        sess = self.get_session(id)
         sess.messages = []
 
-    def delete_session(self, session_id: Union[str, UUID] = None) -> None:
-        sess = self.get_session(session_id)
+    def delete_session(self, id: Union[str, UUID] = None) -> None:
+        sess = self.get_session(id)
         if sess.id == self.default_session.id:
             self.default_session = None
         del self.sessions[sess.id]
@@ -208,35 +210,37 @@ class AIChat(BaseModel):
     def __call__(
         self,
         prompt: str,
-        session_id: Union[str, UUID] = None,
+        id: Union[str, UUID] = None,
+        system: str = None,
         save_messages: bool = True,
+        params: Dict[str, Any] = None,
     ) -> str:
-        sess = self.get_session(session_id)
-        return sess(prompt, client=self.client, save_messages=save_messages)
+        sess = self.get_session(id)
+        return sess(
+            prompt,
+            client=self.client,
+            system=system,
+            save_messages=save_messages,
+            params=params,
+        )
 
-    def build_system_prompt(
-        self, character: str = None, system_prompt: str = None
-    ) -> str:
+    def build_system(self, character: str = None, system: str = None) -> str:
         default = "You are a helpful assistant."
         if character:
             character_prompt = """
-            You are the following character and should speak as they would: {0}
+            You are the following character and should act as they would: {0}
 
-            Concisely introduce yourself first.
+            CONCISELY introduce yourself first.
             """
             prompt = character_prompt.format(wikipedia_search_lookup(character)).strip()
-            if system_prompt:
-                character_system_prompt = """
+            if system:
+                character_system = """
                 You MUST obey the following rule at all times: {0}
                 """
-                prompt = (
-                    prompt
-                    + "\n\n"
-                    + character_system_prompt.format(system_prompt).strip()
-                )
+                prompt = prompt + "\n\n" + character_system.format(system).strip()
             return prompt
-        elif system_prompt:
-            return system_prompt
+        elif system:
+            return system
         else:
             return default
 
@@ -273,23 +277,23 @@ class AIChat(BaseModel):
         return ""
 
     # Tabulators for returning total token counts
-    def message_totals(self, attr: str, session_id: Union[str, UUID] = None) -> int:
-        sess = self.get_session(session_id)
+    def message_totals(self, attr: str, id: Union[str, UUID] = None) -> int:
+        sess = self.get_session(id)
         return sum([x.dict().get(attr, 0)] for x in sess.messages)
 
     @property
-    def total_prompt_length(self, session_id: Union[str, UUID] = None) -> int:
-        return self.message_totals("prompt_length", session_id)
+    def total_prompt_length(self, id: Union[str, UUID] = None) -> int:
+        return self.message_totals("prompt_length", id)
 
     @property
-    def total_completion_length(self, session_id: Union[str, UUID] = None) -> int:
-        return self.message_totals("completion_length", session_id)
+    def total_completion_length(self, id: Union[str, UUID] = None) -> int:
+        return self.message_totals("completion_length", id)
 
     @property
-    def total_length(self, session_id: Union[str, UUID] = None) -> int:
-        return self.message_totals("total_length", session_id)
+    def total_length(self, id: Union[str, UUID] = None) -> int:
+        return self.message_totals("total_length", id)
 
     # alias total_tokens to total_length for common use
     @property
-    def total_tokens(self, session_id: Union[str, UUID] = None) -> int:
-        return self.total_length(session_id)
+    def total_tokens(self, id: Union[str, UUID] = None) -> int:
+        return self.total_length(id)
