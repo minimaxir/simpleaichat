@@ -53,6 +53,9 @@ class ChatSession(BaseModel):
     input_fields: Set[str] = {}
     recent_messages: Optional[int] = None
     save_messages: bool = True
+    total_prompt_length: int = 0
+    total_completion_length: int = 0
+    total_length: int = 0
 
     class Config:
         json_loads = orjson.loads
@@ -121,6 +124,10 @@ class ChatGPTSession(ChatSession):
             completion_length=r["usage"]["completion_tokens"],
             total_length=r["usage"]["total_tokens"],
         )
+
+        self.total_prompt_length += r["usage"]["prompt_tokens"]
+        self.total_completion_length += r["usage"]["completion_tokens"]
+        self.total_length += r["usage"]["total_tokens"]
 
         if save_messages or self.save_messages:
             self.messages.append(user_message)
@@ -279,15 +286,15 @@ class AIChat(BaseModel):
     # Tabulators for returning total token counts
     def message_totals(self, attr: str, id: Union[str, UUID] = None) -> int:
         sess = self.get_session(id)
-        return sum([x.dict().get(attr, 0)] for x in sess.messages)
+        return getattr(sess, attr)
 
     @property
     def total_prompt_length(self, id: Union[str, UUID] = None) -> int:
-        return self.message_totals("prompt_length", id)
+        return self.message_totals("total_prompt_length", id)
 
     @property
     def total_completion_length(self, id: Union[str, UUID] = None) -> int:
-        return self.message_totals("completion_length", id)
+        return self.message_totals("total_completion_length", id)
 
     @property
     def total_length(self, id: Union[str, UUID] = None) -> int:
