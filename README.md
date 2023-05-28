@@ -83,8 +83,8 @@ A large number of popular venture-capital-funded ChatGPT apps don't actually use
 json = "{'title': 'An array of integers.', 'array': [-1, 0, 1]}"
 functions = [
              "Format the user-provided JSON as YAML.",
-             "Write a 5/7/5 haiku based on the user-provided JSON.",
-             "Translate only the values in the user-provided JSON from English to French."
+             "Write a limerick based on the user-provided JSON.",
+             "Translate the user-provided JSON from English to French."
             ]
 params = {"temperature": 0.0, "max_tokens": 100}  # a temperature of 0.0 is deterministic
 
@@ -93,7 +93,30 @@ params = {"temperature": 0.0, "max_tokens": 100}  # a temperature of 0.0 is dete
 # but you can change them per-generation, as is the case with the `system` prompt here.
 ai = AIChat(id="function", params=params, save_messages=False)
 for function in functions:
-    ai(json, id="function", system=function)
+    output = ai(json, id="function", system=function)
+    print(output)
+```
+
+Results:
+
+```txt
+title: "An array of integers."
+array:
+  - -1
+  - 0
+  - 1
+```
+
+```txt
+An array of integers so neat,
+With values that can't be beat,
+From negative to positive one,
+It's a range that's quite fun,
+This array is really quite sweet!
+```
+
+```txt
+{'titre': 'Un tableau d\'entiers.', 'tableau': [-1, 0, 1]}
 ```
 
 ## Tools

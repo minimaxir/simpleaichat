@@ -54,7 +54,7 @@ class ChatSession(BaseModel):
     messages: List[ChatMessage] = []
     input_fields: Set[str] = {}
     recent_messages: Optional[int] = None
-    save_messages: bool = True
+    save_messages: Optional[bool] = True
     total_prompt_length: int = 0
     total_completion_length: int = 0
     total_length: int = 0
@@ -97,7 +97,7 @@ class ChatGPTSession(ChatSession):
         prompt: str,
         client: Union[Client, AsyncClient],
         system: str = None,
-        save_messages: bool = True,
+        save_messages: bool = None,
         params: Dict[str, Any] = None,
     ) -> str:
         headers = {
@@ -232,7 +232,7 @@ class AIChat(BaseModel):
         prompt: str,
         id: Union[str, UUID] = None,
         system: str = None,
-        save_messages: bool = True,
+        save_messages: bool = None,
         params: Dict[str, Any] = None,
     ) -> str:
         sess = self.get_session(id)
