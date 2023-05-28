@@ -152,11 +152,9 @@ class AIChat(BaseModel):
         self,
         character: str = None,
         system: str = None,
-        prime: bool = True,
-        model: str = "gpt-3.5-turbo",
-        is_async: bool = False,
-        api_key: str = None,
         id: Union[str, UUID] = uuid4(),
+        prime: bool = True,
+        is_async: bool = False,
         default_session: bool = True,
         **kwargs,
     ):
@@ -165,9 +163,7 @@ class AIChat(BaseModel):
         system = self.build_system(character, system)
 
         if default_session:
-            new_session = self.new_session(
-                model, system, api_key, id, return_session=True, **kwargs
-            )
+            new_session = self.new_session(system, id, return_session=True, **kwargs)
 
             default_session = new_session
             sessions = {new_session.id: new_session}
@@ -182,17 +178,16 @@ class AIChat(BaseModel):
 
     def new_session(
         self,
-        model,
         system: str = None,
-        api_key: str = None,
         id: Union[str, UUID] = uuid4(),
         return_session: bool = False,
         **kwargs,
     ) -> Optional[ChatGPTSession]:
 
+        model = kwargs.get("model", "gpt-3.5-turbo")
         # TODO: Add support for more models (PaLM, Claude)
         if "gpt-" in model:
-            gpt_api_key = os.getenv("OPENAI_API_KEY") or api_key
+            gpt_api_key = os.getenv("OPENAI_API_KEY") or kwargs.get("api_key")
             assert gpt_api_key, f"An API key for {model} was not defined."
             sess = ChatGPTSession(
                 id=id,
