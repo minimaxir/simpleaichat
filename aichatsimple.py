@@ -1,5 +1,6 @@
 import os
 import datetime
+import dateutil
 from uuid import uuid4, UUID
 import csv
 
@@ -49,7 +50,7 @@ class ChatSession(BaseModel):
     api_url: HttpUrl
     model: str
     system: str
-    params: Dict[str, Any] = {"temperature": 0.7}
+    params: Dict[str, Any] = {}
     messages: List[ChatMessage] = []
     input_fields: Set[str] = {}
     recent_messages: Optional[int] = None
@@ -68,7 +69,7 @@ class ChatSession(BaseModel):
         last_message_str = self.messages[-1].received_at.strftime("%Y-%m-%d %H:%M:%S")
         return f"""Chat session started at {sess_start_str}:
         - {len(self.messages):,} Messages
-        - Last message sent at {last_message_str})"""
+        - Last message sent at {last_message_str}"""
 
     def format_input_messages(
         self, system_message: ChatMessage, user_message: ChatMessage
@@ -88,6 +89,8 @@ class ChatSession(BaseModel):
 class ChatGPTSession(ChatSession):
     api_url: HttpUrl = "https://api.openai.com/v1/chat/completions"
     input_fields: Set[str] = {"role", "content"}
+    system: str = "You are a helpful assistant."
+    params: Dict[str, Any] = {"temperature": 0.7}
 
     def __call__(
         self,
@@ -162,14 +165,18 @@ class AIChat(BaseModel):
         client = Client() if not is_async else AsyncClient()
         system = self.build_system(character, system)
 
+        sessions = {}
+        new_default_session = None
         if default_session:
-            new_session = self.new_session(system, id, return_session=True, **kwargs)
+            new_session = self.new_session(
+                return_session=True, system=system, id=id, **kwargs
+            )
 
-            default_session = new_session
+            new_default_session = new_session
             sessions = {new_session.id: new_session}
 
         super().__init__(
-            client=client, default_session=default_session, sessions=sessions
+            client=client, default_session=new_default_session, sessions=sessions
         )
 
         if character:
@@ -178,25 +185,21 @@ class AIChat(BaseModel):
 
     def new_session(
         self,
-        system: str = None,
-        id: Union[str, UUID] = uuid4(),
         return_session: bool = False,
         **kwargs,
     ) -> Optional[ChatGPTSession]:
 
-        model = kwargs.get("model", "gpt-3.5-turbo")
+        if "model" not in kwargs:  # set default
+            kwargs["model"] = "gpt-3.5-turbo"
         # TODO: Add support for more models (PaLM, Claude)
-        if "gpt-" in model:
+        if "gpt-" in kwargs["model"]:
             gpt_api_key = os.getenv("OPENAI_API_KEY") or kwargs.get("api_key")
-            assert gpt_api_key, f"An API key for {model} was not defined."
+            assert gpt_api_key, f"An API key for {kwargs['model'] } was not defined."
             sess = ChatGPTSession(
-                id=id,
-                system=system,
                 auth={
                     "api_key": gpt_api_key,
                 },
-                model=model,
-                params=kwargs.get("params"),
+                **kwargs,
             )
 
         if return_session:
@@ -322,6 +325,39 @@ class AIChat(BaseModel):
                         sess_dict, option=orjson.OPT_INDENT_2 if not minify else None
                     )
                 )
+
+    def load_session(self, input_path: str, id: Union[str, UUID] = uuid4(), **kwargs):
+
+        assert input_path.endswith(".csv") or input_path.endswith(
+            ".json"
+        ), "Only CSV and JSON imports are accepted."
+
+        if input_path.endswith(".csv"):
+            with open(input_path, "r", encoding="utf-8") as f:
+                r = csv.DictReader(f)
+                messages = []
+                for row in r:
+                    # need to convert the datetime back to UTC
+                    local_datetime = datetime.datetime.strptime(
+                        row["received_at"], "%Y-%m-%d %H:%M:%S"
+                    ).replace(tzinfo=dateutil.tz.tzlocal())
+                    row["received_at"] = local_datetime.astimezone(
+                        datetime.timezone.utc
+                    )
+                    # https://stackoverflow.com/a/68305271
+                    row = {k: (None if v == "" else v) for k, v in row.items()}
+                    messages.append(ChatMessage(**row))
+
+            self.new_session(id=id, **kwargs)
+            self.sessions[id].messages = messages
+
+        if input_path.endswith(".json"):
+            with open(input_path, "rb") as f:
+                sess_dict = orjson.loads(f.read())
+            # update session with info not loaded, e.g. auth/api_url
+            for arg in kwargs:
+                sess_dict[arg] = kwargs[arg]
+            self.new_session(**sess_dict)
 
     # Tabulators for returning total token counts
     def message_totals(self, attr: str, id: Union[str, UUID] = None) -> int:
