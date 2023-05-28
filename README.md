@@ -1,5 +1,12 @@
 # simpleaichat
 
+```py3
+from simpleaichat import AIChat
+
+ai = AIChat(system="Write a professional GitHub README based on the user-provided coding project description.")
+ai("simpleaichat — a Python package for easily interfacing with ChatGPT with robust features and minimal code complexity.")
+```
+
 ## Installation
 
 simpleaichat can be installed [from PyPI](https://pypi.org/project/simpleaichat/):
@@ -105,6 +112,7 @@ You will need to specify functions
 
 - simpleaichat very intentionally avoids coupling features with common use cases where possible (e.g. Tools) in order to avoid software lock-in due to complexity.
 - The session manager implements some sensible security defaults, such as using UUIDs as session ids by default and storing authentication information in a way to minimize unintentional leakage. Your end-user application should still be aware of potential security issues, however.
+- Outside of the explicit examples, none of this README uses AI-generated text. The introduction code example is just a joke, but it was too good to not use!
 
 ## Maintainer/Creator
 

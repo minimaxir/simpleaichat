@@ -314,7 +314,9 @@ class AIChat(BaseModel):
                 w.writeheader()
                 for message in sess_dict["messages"]:
                     # datetime must be in common format to be loaded into spreadsheet
-                    message["received_at"] = message["received_at"].strftime(
+                    # for human-readability, the timezone is set to local machine
+                    local_datetime = message["received_at"].astimezone()
+                    message["received_at"] = local_datetime.strftime(
                         "%Y-%m-%d %H:%M:%S"
                     )
                     w.writerow(message)
