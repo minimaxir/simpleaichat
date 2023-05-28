@@ -1,6 +1,7 @@
 import os
 import datetime
 from uuid import uuid4, UUID
+import csv
 
 from pydantic import BaseModel, SecretStr, HttpUrl, Field
 from httpx import Client, AsyncClient
@@ -56,6 +57,7 @@ class ChatSession(BaseModel):
     total_prompt_length: int = 0
     total_completion_length: int = 0
     total_length: int = 0
+    title: Optional[str] = None
 
     class Config:
         json_loads = orjson.loads
@@ -164,7 +166,7 @@ class AIChat(BaseModel):
 
         if default_session:
             new_session = self.new_session(
-                model, system, api_key, id, return_session=True
+                model, system, api_key, id, return_session=True, **kwargs
             )
 
             default_session = new_session
@@ -175,6 +177,7 @@ class AIChat(BaseModel):
         )
 
         if character:
+            default_session.title = character
             self.interactive_console(character=character, prime=prime)
 
     def new_session(
@@ -184,6 +187,7 @@ class AIChat(BaseModel):
         api_key: str = None,
         id: Union[str, UUID] = uuid4(),
         return_session: bool = False,
+        **kwargs,
     ) -> Optional[ChatGPTSession]:
 
         # TODO: Add support for more models (PaLM, Claude)
@@ -197,6 +201,7 @@ class AIChat(BaseModel):
                     "api_key": gpt_api_key,
                 },
                 model=model,
+                params=kwargs.get("params"),
             )
 
         if return_session:
@@ -292,6 +297,34 @@ class AIChat(BaseModel):
 
     def __repr__(self) -> str:
         return ""
+
+    # Save/Load Chats given a session id
+    def save_session(
+        self, id: Union[str, UUID] = None, format: str = "csv", minify: bool = False
+    ):
+        sess = self.get_session(id)
+        sess_dict = sess.dict(
+            exclude={"auth", "api_url", "input_fields"},
+            exclude_none=True,
+        )
+        out_path = f"test.{format}"
+        if format == "csv":
+            with open(out_path, "w", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=list(ChatMessage.__fields__.keys()))
+                w.writeheader()
+                for message in sess_dict["messages"]:
+                    # datetime must be in common format to be loaded into spreadsheet
+                    message["received_at"] = message["received_at"].strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+                    w.writerow(message)
+        elif format == "json":
+            with open(out_path, "wb") as f:
+                f.write(
+                    orjson.dumps(
+                        sess_dict, option=orjson.OPT_INDENT_2 if not minify else None
+                    )
+                )
 
     # Tabulators for returning total token counts
     def message_totals(self, attr: str, id: Union[str, UUID] = None) -> int:

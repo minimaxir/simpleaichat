@@ -104,6 +104,7 @@ You will need to specify functions
 ## Miscellaneous Notes
 
 - simpleaichat very intentionally avoids coupling features with common use cases where possible (e.g. Tools) in order to avoid software lock-in due to complexity.
+- The session manager implements some sensible security defaults, such as using UUIDs as session ids by default and storing authentication information in a way to minimize unintentional leakage. Your end-user application should still be aware of potential security issues, however.
 
 ## Maintainer/Creator
 
