@@ -85,19 +85,21 @@ The capital of California
 The capital of California is
 ```
 
-Future inputs to the `ai` object by default
-
-In actuality, the `AIChat` class is a manager of chat _sessions_, which means you can have multiple independent chats happening! The examples above use a default session, but you can create new ones by specifying a `session_key` when calling `ai`.
+You can also save chat sessions (as CSV or JSON) and load them later. The API key is (obviously) not saved so you will have to provide that when loading.
 
 ```py3
-ai.new_session(id="conv1")
-```
+ai.save_session()  # CSV, will only save messages
+ai.save_session(format="json", minify=True)  # JSON
 
-You can also save chat sessions (as CSV or JSON) and load them later.
+ai.load_session("my.csv")
+ai.load_session("my.json")
+```
 
 ### Functions
 
 A large number of popular venture-capital-funded ChatGPT apps don't actually use the "chat" part of the model. Instead, they just use the system prompt/first user prompt as a form of natural language programming. You can emulate this behavior by passing a new system prompt when generating text, and not saving the resulting messages.
+
+The `AIChat` class is a manager of chat _sessions_, which means you can have multiple independent chats or functions happening! The examples above use a default session, but you can create new ones by specifying a `id` when calling `ai`.
 
 ```py3
 json = '{"title": "An array of integers.", "array": [-1, 0, 1]}'
@@ -191,7 +193,3 @@ _Max's open-source projects are supported by his [Patreon](https://www.patreon.c
 ## License
 
 MIT
-
-```
-
-```
