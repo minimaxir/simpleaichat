@@ -99,14 +99,14 @@ class ChatGPTSession(ChatSession):
     params: Dict[str, Any] = {"temperature": 0.7}
     tool_logit_bias: Dict[str, int] = {k: 10 for k in range(15, 25)}
 
-    def __call__(
+    def gen(
         self,
         prompt: str,
         client: Union[Client, AsyncClient],
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
-    ) -> str:
+    ):
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
@@ -129,9 +129,10 @@ class ChatGPTSession(ChatSession):
             timeout=20,
         ).json()
 
+        content = r["choices"][0]["message"]["content"]
         assistant_message = ChatMessage(
             role=r["choices"][0]["message"]["role"],
-            content=r["choices"][0]["message"]["content"],
+            content=content,
             prompt_length=r["usage"]["prompt_tokens"],
             completion_length=r["usage"]["completion_tokens"],
             total_length=r["usage"]["total_tokens"],
@@ -145,7 +146,59 @@ class ChatGPTSession(ChatSession):
             self.messages.append(user_message)
             self.messages.append(assistant_message)
 
-        return r["choices"][0]["message"]["content"]
+        return content
+
+    def stream(
+        self,
+        prompt: str,
+        client: Union[Client, AsyncClient],
+        system: str = None,
+        save_messages: bool = None,
+        params: Dict[str, Any] = None,
+    ):
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
+        }
+
+        system_message = ChatMessage(role="system", content=system or self.system)
+        user_message = ChatMessage(role="user", content=prompt)
+
+        gen_params = params or self.params
+        data = {
+            "model": self.model,
+            "messages": self.format_input_messages(system_message, user_message),
+            "stream": True,
+            **gen_params,
+        }
+        with client.stream(
+            "POST",
+            self.api_url,
+            json=data,
+            headers=headers,
+            timeout=None,
+        ) as r:
+            content = []
+            for chunk in r.iter_lines():
+                if len(chunk) > 0:
+                    chunk = chunk[6:]  # SSE JSON chunks are prepended with "data: "
+                    if chunk != "[DONE]":
+                        chunk_dict = orjson.loads(chunk)
+                        delta = chunk_dict["choices"][0]["delta"].get("content")
+                        if delta:
+                            content.append(delta)
+                            yield {"delta": delta, "response": "".join(content)}
+
+        # streaming does not currently return token counts
+        assistant_message = ChatMessage(
+            role="assistant",
+            content="".join(content),
+        )
+
+        if save_messages or self.save_messages:
+            self.messages.append(user_message)
+            self.messages.append(assistant_message)
+        return assistant_message
 
     def gen_with_tools(
         self,
@@ -320,13 +373,30 @@ class AIChat(BaseModel):
                 params=params,
             )
         else:
-            return sess(
+            return sess.gen(
                 prompt,
                 client=self.client,
                 system=system,
                 save_messages=save_messages,
                 params=params,
             )
+
+    def stream(
+        self,
+        prompt: str,
+        id: Union[str, UUID] = None,
+        system: str = None,
+        save_messages: bool = None,
+        params: Dict[str, Any] = None,
+    ) -> str:
+        sess = self.get_session(id)
+        return sess.stream(
+            prompt,
+            client=self.client,
+            system=system,
+            save_messages=save_messages,
+            params=params,
+        )
 
     def build_system(self, character: str = None, system: str = None) -> str:
         default = "You are a helpful assistant."

@@ -65,6 +65,26 @@ response = ai("What is the capital of California?")
 print(response)
 ```
 
+```
+The capital of California is Sacramento.
+```
+
+Alternatively, you can stream responses by token with a generator if the text generation itself is too slow:
+
+```py3
+for chunk in ai.stream("What is the capital of California?", params={"max_tokens": 5}):
+    response_td = chunk["response"]  # dict contains "delta" for the new token and "response"
+    print(response_td)
+```
+
+```
+The
+The capital
+The capital of
+The capital of California
+The capital of California is
+```
+
 Future inputs to the `ai` object by default
 
 In actuality, the `AIChat` class is a manager of chat _sessions_, which means you can have multiple independent chats happening! The examples above use a default session, but you can create new ones by specifying a `session_key` when calling `ai`.
@@ -96,8 +116,6 @@ for function in functions:
     output = ai(json, id="function", system=function)
     print(output)
 ```
-
-Results:
 
 ```txt
 title: "An array of integers."
