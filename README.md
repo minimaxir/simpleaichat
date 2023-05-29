@@ -85,6 +85,17 @@ The capital of California
 The capital of California is
 ```
 
+Further calls to the `ai` object will continue the chat, automatically incorporating previous information from the conversation.
+
+```py3
+response = ai("When was it founded?")
+print(response)
+```
+
+```
+Sacramento was founded on February 27, 1850.
+```
+
 You can also save chat sessions (as CSV or JSON) and load them later. The API key is (obviously) not saved so you will have to provide that when loading.
 
 ```py3
@@ -182,6 +193,7 @@ response_dict = ai("How are you?", tools=[search, lookup])
   - simpleaichat makes it easier to interface with Chat AIs, but it does not attempt to solve common technical and ethical problems inherent to large language models trained on the internet, including prompt injection and unintended plagiarism. The user should exercise good judgment when implementing simpleaichat.
   - simpleaichat does not use the "Agent" logical metaphor for its actions. If needed be, you can emulate the Agent workflow with a `while` loop without much additional code, plus with the additional benefit of much more flexibility such as debugging.
 - The session manager implements some sensible security defaults, such as using UUIDs as session ids by default, storing authentication information in a way to minimize unintentional leakage, and type enforcement via Pydantic. Your end-user application should still be aware of potential security issues, however.
+- Currently, you cannot use tools with streaming or async, as that requires further testing to make sure it works correctly.
 - Outside of the explicit examples, none of this README uses AI-generated text. The introduction code example is just a joke, but it was too good of a real-world use case!
 
 ## Maintainer/Creator

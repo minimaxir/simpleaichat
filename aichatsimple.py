@@ -99,13 +99,12 @@ class ChatGPTSession(ChatSession):
     params: Dict[str, Any] = {"temperature": 0.7}
     tool_logit_bias: Dict[str, int] = {k: 10 for k in range(15, 25)}
 
-    def gen(
+    def prepare_request(
         self,
         prompt: str,
-        client: Union[Client, AsyncClient],
         system: str = None,
-        save_messages: bool = None,
         params: Dict[str, Any] = None,
+        stream: bool = False,
     ):
         headers = {
             "Content-Type": "application/json",
@@ -119,8 +118,21 @@ class ChatGPTSession(ChatSession):
         data = {
             "model": self.model,
             "messages": self.format_input_messages(system_message, user_message),
+            "stream": stream,
             **gen_params,
         }
+
+        return headers, data, user_message
+
+    def gen(
+        self,
+        prompt: str,
+        client: Union[Client, AsyncClient],
+        system: str = None,
+        save_messages: bool = None,
+        params: Dict[str, Any] = None,
+    ):
+        headers, data, user_message = self.prepare_request(prompt, system, params)
 
         r = client.post(
             self.api_url,
@@ -156,21 +168,10 @@ class ChatGPTSession(ChatSession):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
     ):
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
-        }
+        headers, data, user_message = self.prepare_request(
+            prompt, system, params, stream=True
+        )
 
-        system_message = ChatMessage(role="system", content=system or self.system)
-        user_message = ChatMessage(role="user", content=prompt)
-
-        gen_params = params or self.params
-        data = {
-            "model": self.model,
-            "messages": self.format_input_messages(system_message, user_message),
-            "stream": True,
-            **gen_params,
-        }
         with client.stream(
             "POST",
             self.api_url,
