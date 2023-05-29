@@ -73,7 +73,7 @@ In actuality, the `AIChat` class is a manager of chat _sessions_, which means yo
 ai.new_session(id="conv1")
 ```
 
-You can also save chat sessions (as JSON) and load them later.
+You can also save chat sessions (as CSV or JSON) and load them later.
 
 ### Functions
 
@@ -121,23 +121,47 @@ This JSON is really quite sweet!
 
 ## Tools
 
-One of the most recent aspects of interacting with ChatGPT is the ability for the model to use "tools." As defined from the ReAct paper, tools allow the model to decide when to use custom functions, which can extend beyond just the chat app. This workflow is analogous to ChatGPT Plugins.
+One of the most recent aspects of interacting with ChatGPT is the ability for the model to use "tools." As defined from the ReAct paper, tools allow the model to decide when to use custom functions, which can extend beyond just the chat AI itself, for example retrieving recent information from the internet not present in the chat AI's training data. This workflow is analogous to ChatGPT Plugins.
 
-Using tools typically requires a number of shennanigans, but simpleaichat uses a neat trick to make it fast and easy!
+Using tools typically requires a number of shennanigans, but simpleaichat uses a neat trick to make it fast and easy! Additionally, unlike LangChain, specifying tools returns a dictionary including options selected which you can also populate with arbitrary metadata for debugging and postprocessing.
 
-You will need to specify functions
+You will need to specify functions with docstrings which provide hints for the AI to select them:
+
+```py3
+from simpleaichat.utils import wikipedia_search, wikipedia_lookup
+
+
+def search(query):
+    """Search the internet."""
+    wiki_matches = wikipedia_search(query, n=3)
+    return "\n---\n".join(wiki_matches)
+
+def lookup(query):
+    """Lookup more information about a topic."""
+    page = wikipedia_search_lookup(query, n_sentences=3)
+    return page
+
+params = {"temperature": 0.0, "max_tokens": 100}
+ai = AIChat(params=params, console=False)
+
+response_dict = ai("How are you?", tools=[search, lookup])
+```
 
 ## Roadmap
 
 - PaLM Chat (Bard) and Anthropic Claude support
+- More fun/feature filled CLI chat app
+- Simple example of using simpleaichat in a webapp
+- Simple of example of using simpleaichat in a stateless manner (e.g. AWS Lambda functions)
+- Ability to replace the base prompts
 
 ## Miscellaneous Notes
 
 - Like gpt-2-simple before it, the primary motivation behind releasing simpleaichat is to both democratize access to ChatGPT even more without extolling complexity as a virtue, and also offer more transparency for non-engineers into how Chat AI-based apps work under the hood given the disproportionate amount of media misinformation about their capabilities. This is inspired by real-world experience from [my work with BuzzFeed](https://tech.buzzfeed.com/the-right-tools-for-the-job-c05de96e949e) in the domain, where after spending a long time working with the popular LangChain, a more-simple implementation was both much easier to maintain and resulted in much better generations.
   - simpleaichat very intentionally avoids coupling features with common use cases where possible (e.g. Tools) in order to avoid software lock-in due to the difficulty implementing anything not explicitly mentioned in the project's documentation. The philosophy behind simpleaichat is to provide good demos, and let the user's creativity and business needs take priority instead of having to fit a round peg into a square hole like with LangChain.
-  - simpleaichat makes it easier to interface with Chat AIs, but it does not attempt to solve common technical and ethical problems inherent to large language models trained on the internet, including prompt injection and unintended plagiarism. The use should exercise good judgment when implementing simpleaichat.
+  - simpleaichat makes it easier to interface with Chat AIs, but it does not attempt to solve common technical and ethical problems inherent to large language models trained on the internet, including prompt injection and unintended plagiarism. The user should exercise good judgment when implementing simpleaichat.
   - simpleaichat does not use the "Agent" logical metaphor for its actions. If needed be, you can emulate the Agent workflow with a `while` loop without much additional code, plus with the additional benefit of much more flexibility such as debugging.
-- The session manager implements some sensible security defaults, such as using UUIDs as session ids by default and storing authentication information in a way to minimize unintentional leakage. Your end-user application should still be aware of potential security issues, however.
+- The session manager implements some sensible security defaults, such as using UUIDs as session ids by default, storing authentication information in a way to minimize unintentional leakage, and type enforcement via Pydantic. Your end-user application should still be aware of potential security issues, however.
 - Outside of the explicit examples, none of this README uses AI-generated text. The introduction code example is just a joke, but it was too good of a real-world use case!
 
 ## Maintainer/Creator
@@ -149,3 +173,7 @@ _Max's open-source projects are supported by his [Patreon](https://www.patreon.c
 ## License
 
 MIT
+
+```
+
+```

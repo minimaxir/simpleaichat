@@ -15,6 +15,12 @@ from utils import wikipedia_search_lookup
 
 load_dotenv()
 
+tool_prompt = """From the list of tools below:
+- Reply ONLY with the number of the tool appropriate in response to the user's message.
+- If no tool is appropriate, ONLY reply with \"0\".
+
+{tools}"""
+
 
 def orjson_dumps(v, *, default, **kwargs):
     # orjson.dumps returns bytes, to match standard json.dumps we need to decode
@@ -91,6 +97,7 @@ class ChatGPTSession(ChatSession):
     input_fields: Set[str] = {"role", "content"}
     system: str = "You are a helpful assistant."
     params: Dict[str, Any] = {"temperature": 0.7}
+    tool_logit_bias: Dict[str, int] = {k: 10 for k in range(15, 25)}
 
     def __call__(
         self,
@@ -140,6 +147,68 @@ class ChatGPTSession(ChatSession):
 
         return r["choices"][0]["message"]["content"]
 
+    def gen_with_tools(
+        self,
+        prompt: str,
+        tools: List[Any],
+        client: Union[Client, AsyncClient],
+        system: str = None,
+        save_messages: bool = None,
+        params: Dict[str, Any] = None,
+    ) -> Dict[str, Any]:
+
+        # call 1: select tool and populate context
+        tools_list = "\n".join(f"{i+1}: {f.__doc__}" for i, f in enumerate(tools))
+        tool_prompt_format = tool_prompt.format(tools=tools_list)
+
+        tool_idx = int(
+            self(
+                prompt,
+                client=client,
+                system=tool_prompt_format,
+                save_messages=False,
+                params={
+                    "temperature": 0.0,
+                    "max_tokens": 1,
+                    "logit_bias": self.tool_logit_bias,
+                },
+            )
+        )
+        # if no tool is selected, do a standard generation instead.
+        if tool_idx == 0:
+            return {
+                "response": self(
+                    prompt,
+                    client=client,
+                    system=system,
+                    save_messages=save_messages,
+                    params=params,
+                ),
+                "tool": None,
+            }
+        selected_tool = tools[tool_idx - 1]
+        context_dict = selected_tool(prompt)
+        if isinstance(context_dict, str):
+            context_dict = {"context": context_dict}
+
+        context_dict["tool"] = selected_tool.__name__
+
+        print(context_dict)
+
+        # call 2: generate from the context
+        new_system = f"{system or self.system}\n\nYou MUST use information from the context in your response."
+        new_prompt = f"Context: {context_dict['context']}\n\nUser: {prompt}"
+
+        context_dict["response"] = self(
+            new_prompt,
+            client=client,
+            system=new_system,
+            save_messages=False,
+            params=params,
+        )
+
+        return context_dict
+
 
 class AIChat(BaseModel):
     client: Union[Client, AsyncClient]
@@ -159,6 +228,7 @@ class AIChat(BaseModel):
         prime: bool = True,
         is_async: bool = False,
         default_session: bool = True,
+        console: bool = True,
         **kwargs,
     ):
 
@@ -179,7 +249,7 @@ class AIChat(BaseModel):
             client=client, default_session=new_default_session, sessions=sessions
         )
 
-        if character:
+        if character and console:
             default_session.title = character
             self.interactive_console(character=character, prime=prime)
 
@@ -234,15 +304,29 @@ class AIChat(BaseModel):
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
+        tools: List[Any] = None,
     ) -> str:
         sess = self.get_session(id)
-        return sess(
-            prompt,
-            client=self.client,
-            system=system,
-            save_messages=save_messages,
-            params=params,
-        )
+        if tools:
+            for tool in tools:
+                assert tool.__doc__, f"Tool {tool} does not have a docstring."
+            assert len(tools) <= 9, "You can only have a maximum of 9 tools."
+            return sess.gen_with_tools(
+                prompt,
+                tools,
+                client=self.client,
+                system=system,
+                save_messages=save_messages,
+                params=params,
+            )
+        else:
+            return sess(
+                prompt,
+                client=self.client,
+                system=system,
+                save_messages=save_messages,
+                params=params,
+            )
 
     def build_system(self, character: str = None, system: str = None) -> str:
         default = "You are a helpful assistant."
