@@ -381,7 +381,7 @@ class AIChat(BaseModel):
         )
 
         if character and console:
-            default_session.title = character
+            new_default_session.title = character
             self.interactive_console(character=character, prime=prime)
 
     def new_session(
@@ -480,16 +480,17 @@ class AIChat(BaseModel):
         default = "You are a helpful assistant."
         if character:
             character_prompt = """
-            You are the following character and should act as they would: {0}
-
-            CONCISELY introduce yourself first.
+            You must follow ALL these rules in all responses:
+            - You are the following character and should ALWAYS act as them: {0}
+            - NEVER speak in a formal tone.
+            - Concisely introduce yourself first in character.
             """
             prompt = character_prompt.format(wikipedia_search_lookup(character)).strip()
             if system:
                 character_system = """
-                You MUST obey the following rule at all times: {0}
+                - {0}
                 """
-                prompt = prompt + "\n\n" + character_system.format(system).strip()
+                prompt = prompt + "\n" + character_system.format(system).strip()
             return prompt
         elif system:
             return system
@@ -497,25 +498,28 @@ class AIChat(BaseModel):
             return default
 
     def interactive_console(self, character: str = None, prime: bool = True) -> None:
-        console = Console(width=40, highlight=False)
+        console = Console(highlight=False)
         sess = self.default_session
+        ai_text_color = "bright_magenta"
 
         # prime with a unique starting response to the user
         if prime:
-            ai_response = sess("Hello!", self.client)
-            console.print(f"[b]{character}[/b]: {ai_response}", style="bright_magenta")
+            console.print(f"[b]{character}[/b]: ", end="", style=ai_text_color)
+            for chunk in sess.stream("Hello!", self.client):
+                console.print(chunk["delta"], end="", style=ai_text_color)
 
         while True:
+            console.print()
             try:
                 user_input = console.input("[b]You:[/b] ").strip()
+                if not user_input:
+                    break
+
+                console.print(f"[b]{character}[/b]: ", end="", style=ai_text_color)
+                for chunk in sess.stream(user_input, self.client):
+                    console.print(chunk["delta"], end="", style=ai_text_color)
             except KeyboardInterrupt:
                 break
-            if not user_input:
-                break
-
-            with console.status("", spinner="point"):
-                ai_response = sess(user_input, self.client)
-            console.print(f"[b]{character}[/b]: {ai_response}", style="bright_magenta")
 
     def __str__(self) -> str:
         if self.default_session:
