@@ -139,7 +139,8 @@ class ChatGPTSession(ChatSession):
             json=data,
             headers=headers,
             timeout=20,
-        ).json()
+        )
+        r = r.json()
 
         content = r["choices"][0]["message"]["content"]
         assistant_message = ChatMessage(
@@ -299,6 +300,46 @@ class ChatGPTSession(ChatSession):
             self.messages.append(assistant_message)
 
         return content
+
+    async def stream_async(
+        self,
+        prompt: str,
+        client: Union[Client, AsyncClient],
+        system: str = None,
+        save_messages: bool = None,
+        params: Dict[str, Any] = None,
+    ):
+        headers, data, user_message = self.prepare_request(
+            prompt, system, params, stream=True
+        )
+
+        async with client.stream(
+            "POST",
+            self.api_url,
+            json=data,
+            headers=headers,
+            timeout=None,
+        ) as r:
+            content = []
+            async for chunk in r.aiter_lines():
+                if len(chunk) > 0:
+                    chunk = chunk[6:]  # SSE JSON chunks are prepended with "data: "
+                    if chunk != "[DONE]":
+                        chunk_dict = orjson.loads(chunk)
+                        delta = chunk_dict["choices"][0]["delta"].get("content")
+                        if delta:
+                            content.append(delta)
+                            yield {"delta": delta, "response": "".join(content)}
+
+        # streaming does not currently return token counts
+        assistant_message = ChatMessage(
+            role="assistant",
+            content="".join(content),
+        )
+
+        if save_messages or self.save_messages:
+            self.messages.append(user_message)
+            self.messages.append(assistant_message)
 
 
 class AIChat(BaseModel):
@@ -607,3 +648,23 @@ class AsyncAIChat(AIChat):
                 save_messages=save_messages,
                 params=params,
             )
+
+    async def stream(
+        self,
+        prompt: str,
+        id: Union[str, UUID] = None,
+        system: str = None,
+        save_messages: bool = None,
+        params: Dict[str, Any] = None,
+    ) -> str:
+        # TODO: move to a __post_init__ in Pydantic 2.0
+        if isinstance(self.client, Client):
+            self.client = AsyncClient()
+        sess = self.get_session(id)
+        return sess.stream_async(
+            prompt,
+            client=self.client,
+            system=system,
+            save_messages=save_messages,
+            params=params,
+        )
