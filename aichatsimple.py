@@ -263,6 +263,43 @@ class ChatGPTSession(ChatSession):
 
         return context_dict
 
+    async def gen_async(
+        self,
+        prompt: str,
+        client: Union[Client, AsyncClient],
+        system: str = None,
+        save_messages: bool = None,
+        params: Dict[str, Any] = None,
+    ):
+        headers, data, user_message = self.prepare_request(prompt, system, params)
+
+        r = await client.post(
+            self.api_url,
+            json=data,
+            headers=headers,
+            timeout=20,
+        )
+        r = r.json()
+
+        content = r["choices"][0]["message"]["content"]
+        assistant_message = ChatMessage(
+            role=r["choices"][0]["message"]["role"],
+            content=content,
+            prompt_length=r["usage"]["prompt_tokens"],
+            completion_length=r["usage"]["completion_tokens"],
+            total_length=r["usage"]["total_tokens"],
+        )
+
+        self.total_prompt_length += r["usage"]["prompt_tokens"]
+        self.total_completion_length += r["usage"]["completion_tokens"]
+        self.total_length += r["usage"]["total_tokens"]
+
+        if save_messages or self.save_messages:
+            self.messages.append(user_message)
+            self.messages.append(assistant_message)
+
+        return content
+
 
 class AIChat(BaseModel):
     client: Union[Client, AsyncClient]
@@ -280,13 +317,12 @@ class AIChat(BaseModel):
         system: str = None,
         id: Union[str, UUID] = uuid4(),
         prime: bool = True,
-        is_async: bool = False,
         default_session: bool = True,
         console: bool = True,
         **kwargs,
     ):
 
-        client = Client() if not is_async else AsyncClient()
+        client = Client()
         system = self.build_system(character, system)
 
         sessions = {}
@@ -535,3 +571,39 @@ class AIChat(BaseModel):
     @property
     def total_tokens(self, id: Union[str, UUID] = None) -> int:
         return self.total_length(id)
+
+
+class AsyncAIChat(AIChat):
+    async def __call__(
+        self,
+        prompt: str,
+        id: Union[str, UUID] = None,
+        system: str = None,
+        save_messages: bool = None,
+        params: Dict[str, Any] = None,
+        tools: List[Any] = None,
+    ) -> str:
+        # TODO: move to a __post_init__ in Pydantic 2.0
+        if isinstance(self.client, Client):
+            self.client = AsyncClient()
+        sess = self.get_session(id)
+        if tools:
+            for tool in tools:
+                assert tool.__doc__, f"Tool {tool} does not have a docstring."
+            assert len(tools) <= 9, "You can only have a maximum of 9 tools."
+            return await sess.gen_with_tools_async(
+                prompt,
+                tools,
+                client=self.client,
+                system=system,
+                save_messages=save_messages,
+                params=params,
+            )
+        else:
+            return await sess.gen_async(
+                prompt,
+                client=self.client,
+                system=system,
+                save_messages=save_messages,
+                params=params,
+            )
