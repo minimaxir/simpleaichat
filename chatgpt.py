@@ -62,18 +62,21 @@ class ChatGPTSession(ChatSession):
         )
         r = r.json()
 
-        content = r["choices"][0]["message"]["content"]
-        assistant_message = ChatMessage(
-            role=r["choices"][0]["message"]["role"],
-            content=content,
-            prompt_length=r["usage"]["prompt_tokens"],
-            completion_length=r["usage"]["completion_tokens"],
-            total_length=r["usage"]["total_tokens"],
-        )
+        try:
+            content = r["choices"][0]["message"]["content"]
+            assistant_message = ChatMessage(
+                role=r["choices"][0]["message"]["role"],
+                content=content,
+                prompt_length=r["usage"]["prompt_tokens"],
+                completion_length=r["usage"]["completion_tokens"],
+                total_length=r["usage"]["total_tokens"],
+            )
 
-        self.total_prompt_length += r["usage"]["prompt_tokens"]
-        self.total_completion_length += r["usage"]["completion_tokens"]
-        self.total_length += r["usage"]["total_tokens"]
+            self.total_prompt_length += r["usage"]["prompt_tokens"]
+            self.total_completion_length += r["usage"]["completion_tokens"]
+            self.total_length += r["usage"]["total_tokens"]
+        except KeyError:
+            raise KeyError(f"No AI generation: {r}")
 
         if save_messages or self.save_messages:
             self.messages.append(user_message)

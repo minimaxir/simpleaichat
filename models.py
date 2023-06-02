@@ -32,6 +32,9 @@ class ChatMessage(BaseModel):
     def __str__(self) -> str:
         return self.content
 
+    def __repr__(self) -> str:
+        return self.content
+
 
 class ChatSession(BaseModel):
     id: Union[str, UUID] = Field(default_factory=uuid4)

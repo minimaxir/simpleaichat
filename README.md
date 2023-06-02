@@ -3,9 +3,11 @@
 ```py3
 from simpleaichat import AIChat
 
-ai = AIChat(system="Write a professional GitHub README based on the user-provided coding project description.")
-ai("simpleaichat — a Python package for easily interfacing with ChatGPT with robust features and minimal code complexity.")
+ai = AIChat(system="Write a fancy GitHub README based on the user-provided project name.")
+ai("simpleaichat")
 ```
+
+simpleaichat is a Python package for easily interfacing with chat apps like ChatGPT with robust features and minimal code complexity. This tool has many features optimized for actuall
 
 ## Installation
 
