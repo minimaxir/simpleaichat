@@ -11,6 +11,7 @@ def wikipedia_search(query: str, n: int = 1) -> Union[str, List[str]]:
         "format": "json",
         "srlimit": n,
         "srsearch": query,
+        "srwhat": "text",
         "srprop": "",
     }
 

@@ -138,11 +138,11 @@ class ChatGPTSession(ChatSession):
         tools_list = "\n".join(f"{i+1}: {f.__doc__}" for i, f in enumerate(tools))
         tool_prompt_format = tool_prompt.format(tools=tools_list)
 
-        logit_bias_weight = 10
+        logit_bias_weight = 20
         logit_bias = {str(k): logit_bias_weight for k in range(15, 15 + len(tools) + 1)}
 
         tool_idx = int(
-            self(
+            self.gen(
                 prompt,
                 client=client,
                 system=tool_prompt_format,
@@ -157,7 +157,7 @@ class ChatGPTSession(ChatSession):
         # if no tool is selected, do a standard generation instead.
         if tool_idx == 0:
             return {
-                "response": self(
+                "response": self.gen(
                     prompt,
                     client=client,
                     system=system,
@@ -173,13 +173,11 @@ class ChatGPTSession(ChatSession):
 
         context_dict["tool"] = selected_tool.__name__
 
-        print(context_dict)
-
         # call 2: generate from the context
         new_system = f"{system or self.system}\n\nYou MUST use information from the context in your response."
         new_prompt = f"Context: {context_dict['context']}\n\nUser: {prompt}"
 
-        context_dict["response"] = self(
+        context_dict["response"] = self.gen(
             new_prompt,
             client=client,
             system=new_system,
