@@ -17,7 +17,6 @@ class ChatGPTSession(ChatSession):
     input_fields: Set[str] = {"role", "content"}
     system: str = "You are a helpful assistant."
     params: Dict[str, Any] = {"temperature": 0.7}
-    tool_logit_bias: Dict[str, int] = {k: 10 for k in range(15, 25)}
 
     def prepare_request(
         self,
@@ -139,6 +138,9 @@ class ChatGPTSession(ChatSession):
         tools_list = "\n".join(f"{i+1}: {f.__doc__}" for i, f in enumerate(tools))
         tool_prompt_format = tool_prompt.format(tools=tools_list)
 
+        logit_bias_weight = 10
+        logit_bias = {str(k): logit_bias_weight for k in range(15, 15 + len(tools) + 1)}
+
         tool_idx = int(
             self(
                 prompt,
@@ -148,7 +150,7 @@ class ChatGPTSession(ChatSession):
                 params={
                     "temperature": 0.0,
                     "max_tokens": 1,
-                    "logit_bias": self.tool_logit_bias,
+                    "logit_bias": logit_bias,
                 },
             )
         )

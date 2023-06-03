@@ -3,3 +3,4 @@
 test_notebooks/
 .vscode/
 __pycache__/
+.ipynb_checkpoints
