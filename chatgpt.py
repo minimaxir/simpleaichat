@@ -263,3 +263,66 @@ class ChatGPTSession(ChatSession):
         if save_messages or self.save_messages:
             self.messages.append(user_message)
             self.messages.append(assistant_message)
+
+    async def gen_with_tools_async(
+        self,
+        prompt: str,
+        tools: List[Any],
+        client: Union[Client, AsyncClient],
+        system: str = None,
+        save_messages: bool = None,
+        params: Dict[str, Any] = None,
+    ) -> Dict[str, Any]:
+
+        # call 1: select tool and populate context
+        tools_list = "\n".join(f"{i+1}: {f.__doc__}" for i, f in enumerate(tools))
+        tool_prompt_format = tool_prompt.format(tools=tools_list)
+
+        logit_bias_weight = 20
+        logit_bias = {str(k): logit_bias_weight for k in range(15, 15 + len(tools) + 1)}
+
+        tool_idx = int(
+            await self.gen_async(
+                prompt,
+                client=client,
+                system=tool_prompt_format,
+                save_messages=False,
+                params={
+                    "temperature": 0.0,
+                    "max_tokens": 1,
+                    "logit_bias": logit_bias,
+                },
+            )
+        )
+        # if no tool is selected, do a standard generation instead.
+        if tool_idx == 0:
+            return {
+                "response": await self.gen_async(
+                    prompt,
+                    client=client,
+                    system=system,
+                    save_messages=save_messages,
+                    params=params,
+                ),
+                "tool": None,
+            }
+        selected_tool = tools[tool_idx - 1]
+        context_dict = await selected_tool(prompt)
+        if isinstance(context_dict, str):
+            context_dict = {"context": context_dict}
+
+        context_dict["tool"] = selected_tool.__name__
+
+        # call 2: generate from the context
+        new_system = f"{system or self.system}\n\nYou MUST use information from the context in your response."
+        new_prompt = f"Context: {context_dict['context']}\n\nUser: {prompt}"
+
+        context_dict["response"] = await self.gen_async(
+            new_prompt,
+            client=client,
+            system=new_system,
+            save_messages=False,
+            params=params,
+        )
+
+        return context_dict
