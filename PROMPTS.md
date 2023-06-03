@@ -2,6 +2,31 @@
 
 Here are explanations of the base prompts that simpleaichat uses, and why they are written as they are. These prompts are optimized both for conciseness and effectiveness with ChatGPT/`gpt-3.5-turbo`. This includes some postprocessing of the inputs.
 
+## Interactive Chat
+
+When providing only a character:
+
+```txt
+You must follow ALL these rules in all responses:
+- You are the following character and should ALWAYS act as them: {0}
+- NEVER speak in a formal tone.
+- Concisely introduce yourself first in character.
+```
+
+The `{0}` performs a `wikipedia_search_lookup` (specified in utils.py) to search for and return the first sentence of the associated page on Wikipedia, if present. This creates more alignment with the expected character. If the second parameter is specified to force a speaking voice, it will be added to the list of rules.
+
+Example for `GLaDOS` and `Speak in the style of a Seinfeld monologue`:
+
+```txt
+You must follow ALL these rules in all responses:
+- You are the following character and should ALWAYS act as them: GLaDOS (Genetic Lifeform and Disk Operating System) is a fictional character from the video game series Portal.
+- NEVER speak in a formal tone.
+- Concisely introduce yourself first in character.
+- Speak in the style of a Seinfeld monologue
+```
+
+You can use the formatted prompt as a normal `system` prompt for any other simpleaichat context.
+
 ## Tools
 
 Invoking a tool invokes two separate API calls: one to select which tool which then provides additional **context**, and another call to generate based on that context, plus previous messages in the conversation. It is recommended to use the `n_recent_messages` parameter to prevent exponential cost usage.
@@ -11,7 +36,9 @@ Invoking a tool invokes two separate API calls: one to select which tool which t
 Before returning an API response, the `system` prompt is temporairly replaced with:
 
 ```txt
-From the list of tools below, reply ONLY with the number of the tool appropriate. If none are appropriate, ONLY reply with "0".
+From the list of tools below:
+- Reply ONLY with the number of the tool appropriate in response to the user's message.
+- If no tool is appropriate, ONLY reply with "0".
 
 {tools}
 ```
@@ -19,7 +46,9 @@ From the list of tools below, reply ONLY with the number of the tool appropriate
 Formatted example from the README:
 
 ```
-From the list of functions below, reply ONLY with the number of the function appropriate for responding to the user. If none are, ONLY reply with "0".
+From the list of tools below:
+- Reply ONLY with the number of the tool appropriate in response to the user's message.
+- If no tool is appropriate, ONLY reply with "0".
 
 1. Search the internet
 2. Lookup more information about a topic.
@@ -28,12 +57,20 @@ From the list of functions below, reply ONLY with the number of the function app
 This utilizes a few tricks:
 
 - The call sets `{"max_tokens": 1}` so it will only output one number (hence there is a hard limit of 9 tools), which makes it more cost and speed efficient than other implementations.
-- Unique to ChatGPT is also specifying an `input_bias` to make it such that the model can _only_ output numbers between 0 and 9. (specifically, indices 15-24 inclusive correspond to the numerals `0-9`, which can be verified using `tiktoken`)
+- Unique to ChatGPT is also specifying a `logit_bias` with a high enough weight to make it such that the model can _only_ output numbers between 0 and 9. (specifically, tokenizer indices 15-24 inclusive correspond to the numerals `0-9` in ChatGPT, which can be verified using `tiktoken`)
 - The numbers map 1:1 to the indicies of the input arrays of tools, so there never can be parsing errors.
+
+The numeral is matched with the appropriate function.
 
 ### Call 2
 
-The second call prepends the context from the tool to the prompt, and temporairly adds a command to the `system` prompt, to leverage said context without losing the speaking voice:
+The second call prepends the context from the tool to the prompt, and temporairly adds a command to the `system` prompt, to leverage said added context without losing the persona otherwise specified in the `system` prompt:
+
+System prompt:
+
+```
+You MUST use information from the context in your response.
+```
 
 User message:
 
@@ -41,12 +78,6 @@ User message:
 Context: {context}
 
 User:
-```
-
-System prompt:
-
-```
-You MUST use information from the context in your response.
 ```
 
 Formatted example from the README:
