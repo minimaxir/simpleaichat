@@ -77,3 +77,22 @@ class ChatSession(BaseModel):
             + [m.dict(include=self.input_fields) for m in recent_messages]
             + [user_message.dict(include=self.input_fields)]
         )
+
+    def add_messages(
+        self,
+        user_message: ChatMessage,
+        assistant_message: ChatMessage,
+        save_messages: bool = None,
+    ) -> None:
+
+        # if save_messages is explicitly defined, always use that choice
+        # instead of the default
+        to_save = isinstance(save_messages, bool)
+
+        if to_save:
+            if save_messages:
+                self.messages.append(user_message)
+                self.messages.append(assistant_message)
+        elif self.save_messages:
+            self.messages.append(user_message)
+            self.messages.append(assistant_message)

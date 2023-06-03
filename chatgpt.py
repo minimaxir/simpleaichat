@@ -57,7 +57,7 @@ class ChatGPTSession(ChatSession):
             self.api_url,
             json=data,
             headers=headers,
-            timeout=20,
+            timeout=None,
         )
         r = r.json()
 
@@ -77,9 +77,7 @@ class ChatGPTSession(ChatSession):
         except KeyError:
             raise KeyError(f"No AI generation: {r}")
 
-        if save_messages or self.save_messages:
-            self.messages.append(user_message)
-            self.messages.append(assistant_message)
+        self.add_messages(user_message, assistant_message, save_messages)
 
         return content
 
@@ -119,9 +117,8 @@ class ChatGPTSession(ChatSession):
             content="".join(content),
         )
 
-        if save_messages or self.save_messages:
-            self.messages.append(user_message)
-            self.messages.append(assistant_message)
+        self.add_messages(user_message, assistant_message, save_messages)
+
         return assistant_message
 
     def gen_with_tools(
@@ -185,6 +182,13 @@ class ChatGPTSession(ChatSession):
             params=params,
         )
 
+        # manually append the nonmodified user message + normal AI response
+        user_message = ChatMessage(role="user", content=prompt)
+        assistant_message = ChatMessage(
+            role="assistant", content=context_dict["response"]
+        )
+        self.add_messages(user_message, assistant_message, save_messages)
+
         return context_dict
 
     async def gen_async(
@@ -201,7 +205,7 @@ class ChatGPTSession(ChatSession):
             self.api_url,
             json=data,
             headers=headers,
-            timeout=20,
+            timeout=None,
         )
         r = r.json()
 
@@ -218,9 +222,7 @@ class ChatGPTSession(ChatSession):
         self.total_completion_length += r["usage"]["completion_tokens"]
         self.total_length += r["usage"]["total_tokens"]
 
-        if save_messages or self.save_messages:
-            self.messages.append(user_message)
-            self.messages.append(assistant_message)
+        self.add_messages(user_message, assistant_message, save_messages)
 
         return content
 
@@ -260,9 +262,7 @@ class ChatGPTSession(ChatSession):
             content="".join(content),
         )
 
-        if save_messages or self.save_messages:
-            self.messages.append(user_message)
-            self.messages.append(assistant_message)
+        self.add_messages(user_message, assistant_message, save_messages)
 
     async def gen_with_tools_async(
         self,
@@ -324,5 +324,12 @@ class ChatGPTSession(ChatSession):
             save_messages=False,
             params=params,
         )
+
+        # manually append the nonmodified user message + normal AI response
+        user_message = ChatMessage(role="user", content=prompt)
+        assistant_message = ChatMessage(
+            role="assistant", content=context_dict["response"]
+        )
+        self.add_messages(user_message, assistant_message, save_messages)
 
         return context_dict
