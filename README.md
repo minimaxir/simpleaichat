@@ -12,7 +12,7 @@ simpleaichat is a Python package for easily interfacing with chat apps like Chat
 - Create and run chats with only a few lines of code!
 - Optimized workflows which minimize the amount of tokens used, reducing costs and latency.
 - Run multiple independent chats at once.
-- Minimal codebase: no propriatery black magic here!
+- Minimal codebase: no code dives to figure out what's going on under the hood needed!
 - Chat streaming responses and the ability to use tools.
 - Async support, including for streaming and tools.
 - Ablity to create more complex yet clear workflows if needed, such as Agents.
@@ -179,7 +179,7 @@ This JSON is really quite sweet!
 
 One of the most recent aspects of interacting with ChatGPT is the ability for the model to use "tools." As defined from the ReAct paper, tools allow the model to decide when to use custom functions, which can extend beyond just the chat AI itself, for example retrieving recent information from the internet not present in the chat AI's training data. This workflow is analogous to ChatGPT Plugins.
 
-Using tools typically requires a number of shennanigans, but simpleaichat uses a neat trick to make it fast and easy! Additionally, specifying tools return a `context` for ChatGPT to draw from, and can return a dictionary which you can also populate with arbitrary metadata for debugging and postprocessing.
+Parsing the model output to invoke tools typically requires a number of shennanigans, but simpleaichat uses [a neat trick](https://github.com/minimaxir/simpleaichat/blob/main/PROMPTS.md#tools) to make it fast and reliable! Additionally, the specified tools return a `context` for ChatGPT to draw from for its final response, and can return a dictionary which you can also populate with arbitrary metadata for debugging and postprocessing.
 
 You will need to specify functions with docstrings which provide hints for the AI to select them:
 
@@ -233,7 +233,7 @@ ai("Thanks for your help!", tools=[search, lookup])
 
 ## Miscellaneous Notes
 
-- Like gpt-2-simple before it, the primary motivation behind releasing simpleaichat is to both democratize access to ChatGPT even more without extolling complexity as a virtue, and also offer more transparency for non-engineers into how Chat AI-based apps work under the hood given the disproportionate amount of media misinformation about their capabilities. This is inspired by real-world experience from [my work with BuzzFeed](https://tech.buzzfeed.com/the-right-tools-for-the-job-c05de96e949e) in the domain, where after spending a long time working with the popular LangChain, a more-simple implementation was both much easier to maintain and resulted in much better generations. I began focusing development on simpleaichat after reading a [Hacker News thread](https://news.ycombinator.com/item?id=35820931) filled with many similar complaints, indicating value for an easier-to-use interface for modern AI tricks.
+- Like [gpt-2-simple](https://github.com/minimaxir/gpt-2-simple) before it, the primary motivation behind releasing simpleaichat is to both democratize access to ChatGPT even more without extolling complexity as a virtue, and also offer more transparency for non-engineers into how Chat AI-based apps work under the hood given the disproportionate amount of media misinformation about their capabilities. This is inspired by real-world experience from [my work with BuzzFeed](https://tech.buzzfeed.com/the-right-tools-for-the-job-c05de96e949e) in the domain, where after spending a long time working with the popular LangChain, a more-simple implementation was both much easier to maintain and resulted in much better generations. I began focusing development on simpleaichat after reading a [Hacker News thread](https://news.ycombinator.com/item?id=35820931) filled with many similar complaints, indicating value for an easier-to-use interface for modern AI tricks.
   - simpleaichat very intentionally avoids coupling features with common use cases where possible (e.g. Tools) in order to avoid software lock-in due to the difficulty implementing anything not explicitly mentioned in the project's documentation. The philosophy behind simpleaichat is to provide good demos, and let the user's creativity and business needs take priority instead of having to fit a round peg into a square hole like with LangChain.
   - simpleaichat makes it easier to interface with Chat AIs, but it does not attempt to solve common technical and ethical problems inherent to large language models trained on the internet, including prompt injection and unintended plagiarism. The user should exercise good judgment when implementing simpleaichat. Use cases of simpleaichat which go against OpenAI's usage policy (including jailbreaking) will not be endorsed.
   - simpleaichat does not use the "Agent" logical metaphor for its actions. If needed be, you can emulate the Agent workflow with a `while` loop without much additional code, plus with the additional benefit of much more flexibility such as debugging.

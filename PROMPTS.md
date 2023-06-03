@@ -58,7 +58,11 @@ You MUST use information from the context in your response.
 ```
 
 ```
-Context:
+Context: Tourist attraction
+---
+Buena Park, California
+---
+Lombard Street (San Francisco)
 
-User: How are you?
+User: What is a good tourist attraction in California?
 ```
