@@ -20,7 +20,7 @@ simpleaichat is a Python package for easily interfacing with chat apps like Chat
 
 Here's some fun, hackable examples on how simpleaichat works:
 
-- Creating a coding assistant (without any unnecessary accompanying output)
+- Creating a coding assistant without any unnecessary accompanying output
 - Allowing simpleaichat to make selections for inline ChatGPT usage guidelines.
 - Async interface for conducting many chats in the time it takes to receive one AI message.
 
@@ -74,9 +74,9 @@ simpleaichat "GLaDOS" "Speak in the style of a Seinfeld monologue"
 
 ## Building AI-based Apps
 
-The trick with working with new chat-based apps that wasn't readily available with earlier iterations of GPT-3 is the addition of the system prompt: a different class of prompt that guides the AI behavior throughout the entire conversation. In fact, the chat demos above are actually using system prompt tricks behind the scenes, and you can read how they work in PROMPTS.md.
+The trick with working with new chat-based apps that wasn't readily available with earlier iterations of GPT-3 is the addition of the system prompt: a different class of prompt that guides the AI behavior throughout the entire conversation. In fact, the chat demos above are actually using [system prompt tricks](https://github.com/minimaxir/simpleaichat/blob/main/PROMPTS.md#interactive-chat) behind the scenes!
 
-For developers, you can instantiate a programmatic instance of `AIChat` by explicitly specifying a system prompt, or by disabling the console app.
+For developers, you can instantiate a programmatic instance of `AIChat` by explicitly specifying a system prompt, or by disabling the console.
 
 ```py3
 ai = AIChat(system="You are a helpful assistant")
@@ -247,7 +247,6 @@ ai("Thanks for your help!", tools=[search, lookup])
 - More fun/feature-filled CLI chat app based on Textual
 - Simple example of using simpleaichat in a webapp
 - Simple of example of using simpleaichat in a stateless manner (e.g. AWS Lambda functions)
-- Ability to modify the base tool workflow
 
 ## Maintainer/Creator
 

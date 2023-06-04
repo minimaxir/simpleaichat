@@ -4,7 +4,7 @@ Here are explanations of the base prompts that simpleaichat uses, and why they a
 
 ## Interactive Chat
 
-When providing only a character:
+When providing only a character, the `system` chat for the interactive chat becomes:
 
 ```txt
 You must follow ALL these rules in all responses:
@@ -29,7 +29,7 @@ You can use the formatted prompt as a normal `system` prompt for any other simpl
 
 ## Tools
 
-Invoking a tool invokes two separate API calls: one to select which tool which then provides additional **context**, and another call to generate based on that context, plus previous messages in the conversation. It is recommended to use the `n_recent_messages` parameter to prevent exponential cost usage.
+Invoking a tool invokes two separate API calls: one to select which tool which then provides additional **context**, and another call to generate based on that context, plus previous messages in the conversation.
 
 ### Call #1
 
