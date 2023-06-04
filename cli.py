@@ -12,8 +12,7 @@ def interactive_chat(character=None, system=None, prime=True):
     if not gpt_api_key:
         gpt_api_key = getpass("Input your OpenAI key here: ")
     assert gpt_api_key, "An API key was not defined."
-    chat = AIChat(character=character, system=system)
-    chat.interactive_console(character=character or "ChatGPT", prime=prime)
+    _ = AIChat(character=character, system=system)
     return
 
 
