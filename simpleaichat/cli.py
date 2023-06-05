@@ -1,7 +1,7 @@
 import fire
 import os
 from getpass import getpass
-from aichatsimple import AIChat
+from .simpleaichat import AIChat
 from dotenv import load_dotenv
 
 load_dotenv()

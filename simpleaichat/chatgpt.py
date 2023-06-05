@@ -3,7 +3,7 @@ from httpx import Client, AsyncClient
 from typing import List, Dict, Union, Set, Any
 import orjson
 
-from models import ChatMessage, ChatSession
+from .models import ChatMessage, ChatSession
 
 tool_prompt = """From the list of tools below:
 - Reply ONLY with the number of the tool appropriate in response to the user's message.
