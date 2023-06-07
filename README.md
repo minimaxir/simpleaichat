@@ -15,7 +15,7 @@ simpleaichat is a Python package for easily interfacing with chat apps like Chat
 - Minimal codebase: no code dives to figure out what's going on under the hood needed!
 - Chat streaming responses and the ability to use tools.
 - Async support, including for streaming and tools.
-- Ablity to create more complex yet clear workflows if needed, such as Agents.
+- Ablity to create more complex yet clear workflows if needed, such as Agents. (Demo soon!)
 - Coming soon: more chat model support (PaLM, Claude)!
 
 Here's some fun, hackable examples on how simpleaichat works:
@@ -44,6 +44,8 @@ AIChat(api_key="sk-...")
 
 And with that, you'll be thrust directly into a chat!
 
+![](docs/helloworld.png)
+
 This AI chat will mimic the behavior of OpenAI's webapp, but on your local computer!
 
 You can also pass the API key by storing it in an `.env` file with a `OPEN_AI_KEY` field in the working directory (recommended), or by setting the environment variable of `OPEN_AI_KEY` directly to the API key.
@@ -54,15 +56,21 @@ But what about creating your own custom conversations? That's where things get f
 AIChat("GLaDOS")  # assuming API key loaded via methods above
 ```
 
+![](docs/glados.png)
+
 But that's not all! You can customize exactly how they behave too with additional commands!
 
 ```py3
 AIChat("GLaDOS", "Speak in the style of a Seinfeld monologue")
 ```
 
+![](docs/gladoseinfeld.png)
+
 ```py3
 AIChat("Ronald McDonald", "Speak using only emoji")
 ```
+
+![](docs/clownemoji.png)
 
 Need some socialization immediately? Once simpleaichat is installed, you can also start these chats directly from the command line!
 
@@ -74,7 +82,7 @@ simpleaichat "GLaDOS" "Speak in the style of a Seinfeld monologue"
 
 ## Building AI-based Apps
 
-The trick with working with new chat-based apps that wasn't readily available with earlier iterations of GPT-3 is the addition of the system prompt: a different class of prompt that guides the AI behavior throughout the entire conversation. In fact, the chat demos above are actually using [system prompt tricks](https://github.com/minimaxir/simpleaichat/blob/main/PROMPTS.md#interactive-chat) behind the scenes!
+The trick with working with new chat-based apps that wasn't readily available with earlier iterations of GPT-3 is the addition of the system prompt: a different class of prompt that guides the AI behavior throughout the entire conversation. In fact, the chat demos above are actually using [system prompt tricks](https://github.com/minimaxir/simpleaichat/blob/main/PROMPTS.md#interactive-chat) behind the scenes! OpenAI has also released an official guide for [system prompt best practices](https://platform.openai.com/docs/guides/gpt-best-practices) to building AI apps.
 
 For developers, you can instantiate a programmatic instance of `AIChat` by explicitly specifying a system prompt, or by disabling the console.
 
@@ -239,6 +247,7 @@ ai("Thanks for your help!", tools=[search, lookup])
   - simpleaichat does not use the "Agent" logical metaphor for its actions. If needed be, you can emulate the Agent workflow with a `while` loop without much additional code, plus with the additional benefit of much more flexibility such as debugging.
 - The session manager implements some sensible security defaults, such as using UUIDs as session ids by default, storing authentication information in a way to minimize unintentional leakage, and type enforcement via Pydantic. Your end-user application should still be aware of potential security issues, however.
 - Although OpenAI's documentation says that system prompts are less effective than a user prompt constructed in a similar manner, in my experience it still does perform better for maintaining rules/a persona.
+- Many examples of popular prompts use more conversational prompts, while the example prompts here use more consise and imperative prompts. This aspect of prompt engineering is still evolving, but in my experience commands do better with ChatGPT and with greater token efficieny. That's also why simpleaichat allows users to specify system prompts (and explicitly highlights what the default use) instead of relying on historical best practices.
 - Outside of the explicit examples, none of this README uses AI-generated text. The introduction code example is just a joke, but it was too good of a real-world use case!
 
 ## Roadmap
