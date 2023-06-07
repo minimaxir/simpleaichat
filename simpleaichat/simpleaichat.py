@@ -31,6 +31,7 @@ class AIChat(BaseModel):
     def __init__(
         self,
         character: str = None,
+        character_command: str = None,
         system: str = None,
         id: Union[str, UUID] = uuid4(),
         prime: bool = True,
@@ -40,13 +41,13 @@ class AIChat(BaseModel):
     ):
 
         client = Client()
-        system = self.build_system(character, system)
+        system_format = self.build_system(character, character_command, system)
 
         sessions = {}
         new_default_session = None
         if default_session:
             new_session = self.new_session(
-                return_session=True, system=system, id=id, **kwargs
+                return_session=True, system=system_format, id=id, **kwargs
             )
 
             new_default_session = new_session
@@ -56,7 +57,7 @@ class AIChat(BaseModel):
             client=client, default_session=new_default_session, sessions=sessions
         )
 
-        if character or console:
+        if not system and console:
             character = "ChatGPT" if not character else character
             new_default_session.title = character
             self.interactive_console(character=character, prime=prime)
@@ -153,7 +154,9 @@ class AIChat(BaseModel):
             params=params,
         )
 
-    def build_system(self, character: str = None, system: str = None) -> str:
+    def build_system(
+        self, character: str = None, character_command: str = None, system: str = None
+    ) -> str:
         default = "You are a helpful assistant."
         if character:
             character_prompt = """
@@ -163,11 +166,13 @@ class AIChat(BaseModel):
             - Concisely introduce yourself first in character.
             """
             prompt = character_prompt.format(wikipedia_search_lookup(character)).strip()
-            if system:
+            if character_command:
                 character_system = """
                 - {0}
                 """
-                prompt = prompt + "\n" + character_system.format(system).strip()
+                prompt = (
+                    prompt + "\n" + character_system.format(character_command).strip()
+                )
             return prompt
         elif system:
             return system
