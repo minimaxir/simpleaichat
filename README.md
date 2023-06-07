@@ -21,7 +21,7 @@ simpleaichat is a Python package for easily interfacing with chat apps like Chat
 Here's some fun, hackable examples on how simpleaichat works:
 
 - Creating a coding assistant without any unnecessary accompanying output
-- Allowing simpleaichat to make selections for inline ChatGPT usage guidelines.
+- Allowing simpleaichat to [provide inline tips](examples/notebooks/chatgpt_inline_tips.ipynb) following ChatGPT usage guidelines.
 - Async interface for conducting many chats in the time it takes to receive one AI message.
 
 ## Installation
