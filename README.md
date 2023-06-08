@@ -20,9 +20,9 @@ simpleaichat is a Python package for easily interfacing with chat apps like Chat
 
 Here's some fun, hackable examples on how simpleaichat works:
 
-- Creating a [Python coding assistant](examples/notebooks/chatgpt_coding.ipynb) without any unnecessary accompanying output, allowing 5x faster generation at 1/3rd the cost ([Colab](https://colab.research.google.com/github/minimaxir/simpleaichat/blob/main/examples/notebooks/chatgpt_coding.ipynb))
+- Creating a [Python coding assistant](examples/notebooks/simpleaichat_coding.ipynb) without any unnecessary accompanying output, allowing 5x faster generation at 1/3rd the cost ([Colab](https://colab.research.google.com/github/minimaxir/simpleaichat/blob/main/examples/notebooks/simpleaichat_coding.ipynb))
 - Allowing simpleaichat to [provide inline tips](examples/notebooks/chatgpt_inline_tips.ipynb) following ChatGPT usage guidelines. ([Colab](https://colab.research.google.com/github/minimaxir/simpleaichat/blob/main/examples/notebooks/chatgpt_inline_tips.ipynb))
-- Async interface for conducting many chats in the time it takes to receive one AI message.
+- Async interface for [conducting many chats](examples/notebooks/simpleaichat_async.ipynb) in the time it takes to receive one AI message. ([Colab](https://colab.research.google.com/github/minimaxir/simpleaichat/blob/main/examples/notebooks/simpleaichat_async.ipynb))
 
 ## Installation
 
