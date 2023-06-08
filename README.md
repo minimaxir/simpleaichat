@@ -129,7 +129,7 @@ print(response)
 Sacramento was founded on February 27, 1850.
 ```
 
-You can also save chat sessions (as CSV or JSON) and load them later. The API key is (obviously) not saved so you will have to provide that when loading.
+You can also save chat sessions (as CSV or JSON) and load them later. The API key is not saved so you will have to provide that when loading.
 
 ```py3
 ai.save_session()  # CSV, will only save messages
