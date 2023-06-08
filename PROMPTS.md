@@ -57,8 +57,8 @@ From the list of tools below:
 This utilizes a few tricks:
 
 - The call sets `{"max_tokens": 1}` so it will only output one number (hence there is a hard limit of 9 tools), which makes it more cost and speed efficient than other implementations.
-- Unique to ChatGPT is also specifying a `logit_bias` with a high enough weight to make it such that the model can _only_ output numbers between 0 and 9. (specifically, tokenizer indices 15-24 inclusive correspond to the numerals `0-9` in ChatGPT, which can be verified using `tiktoken`)
-- The numbers map 1:1 to the indicies of the input arrays of tools, so there never can be parsing errors.
+- Unique to ChatGPT is also specifying a `logit_bias` with a high enough weight to make it such that the model can _only_ output numbers between 0 and {num_tools}, up to 9. (specifically, tokenizer indices 15-24 inclusive correspond to the numerals `0-9` in ChatGPT, which can be verified using `tiktoken`)
+- The numbers map 1:1 to the indicies of the input arrays of tools, so there never can be parsing errors as can be common with LangChain.
 
 The numeral is matched with the appropriate function.
 
