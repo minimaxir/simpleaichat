@@ -37,7 +37,7 @@ Before returning an API response, the `system` prompt is temporairly replaced wi
 
 ```txt
 From the list of tools below:
-- Reply ONLY with the number of the tool appropriate in response to the user's message.
+- Reply ONLY with the number of the tool appropriate in response to the user's last message.
 - If no tool is appropriate, ONLY reply with "0".
 
 {tools}
@@ -47,7 +47,7 @@ Formatted example from the README:
 
 ```
 From the list of tools below:
-- Reply ONLY with the number of the tool appropriate in response to the user's message.
+- Reply ONLY with the number of the tool appropriate in response to the user's last message.
 - If no tool is appropriate, ONLY reply with "0".
 
 1. Search the internet
@@ -89,11 +89,7 @@ You MUST use information from the context in your response.
 ```
 
 ```
-Context: Tourist attraction
----
-Buena Park, California
----
-Lombard Street (San Francisco)
+Context: Fisherman's Wharf, San Francisco, Tourist attractions in the United States, Lombard Street (San Francisco)
 
-User: What is a good tourist attraction in California?
+User: San Francisco tourist attractions
 ```

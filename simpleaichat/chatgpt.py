@@ -6,7 +6,7 @@ import orjson
 from .models import ChatMessage, ChatSession
 
 tool_prompt = """From the list of tools below:
-- Reply ONLY with the number of the tool appropriate in response to the user's message.
+- Reply ONLY with the number of the tool appropriate in response to the user's last message.
 - If no tool is appropriate, ONLY reply with \"0\".
 
 {tools}"""
@@ -135,7 +135,7 @@ class ChatGPTSession(ChatSession):
         tools_list = "\n".join(f"{i+1}: {f.__doc__}" for i, f in enumerate(tools))
         tool_prompt_format = tool_prompt.format(tools=tools_list)
 
-        logit_bias_weight = 20
+        logit_bias_weight = 100
         logit_bias = {str(k): logit_bias_weight for k in range(15, 15 + len(tools) + 1)}
 
         tool_idx = int(
@@ -151,6 +151,7 @@ class ChatGPTSession(ChatSession):
                 },
             )
         )
+
         # if no tool is selected, do a standard generation instead.
         if tool_idx == 0:
             return {
@@ -278,7 +279,7 @@ class ChatGPTSession(ChatSession):
         tools_list = "\n".join(f"{i+1}: {f.__doc__}" for i, f in enumerate(tools))
         tool_prompt_format = tool_prompt.format(tools=tools_list)
 
-        logit_bias_weight = 20
+        logit_bias_weight = 100
         logit_bias = {str(k): logit_bias_weight for k in range(15, 15 + len(tools) + 1)}
 
         tool_idx = int(
@@ -294,6 +295,7 @@ class ChatGPTSession(ChatSession):
                 },
             )
         )
+
         # if no tool is selected, do a standard generation instead.
         if tool_idx == 0:
             return {

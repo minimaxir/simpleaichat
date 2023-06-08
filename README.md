@@ -20,8 +20,8 @@ simpleaichat is a Python package for easily interfacing with chat apps like Chat
 
 Here's some fun, hackable examples on how simpleaichat works:
 
-- Creating a coding assistant without any unnecessary accompanying output
-- Allowing simpleaichat to [provide inline tips](examples/notebooks/chatgpt_inline_tips.ipynb) following ChatGPT usage guidelines.
+- Creating a [Python coding assistant](examples/notebooks/chatgpt_coding.ipynb) without any unnecessary accompanying output, allowing 5x faster generation at 1/3rd the cost ([Colab](https://colab.research.google.com/github/minimaxir/simpleaichat/blob/main/examples/notebooks/chatgpt_coding.ipynb))
+- Allowing simpleaichat to [provide inline tips](examples/notebooks/chatgpt_inline_tips.ipynb) following ChatGPT usage guidelines. ([Colab](https://colab.research.google.com/github/minimaxir/simpleaichat/blob/main/examples/notebooks/chatgpt_inline_tips.ipynb))
 - Async interface for conducting many chats in the time it takes to receive one AI message.
 
 ## Installation
@@ -187,36 +187,38 @@ This JSON is really quite sweet!
 
 One of the most recent aspects of interacting with ChatGPT is the ability for the model to use "tools." As defined from the ReAct paper, tools allow the model to decide when to use custom functions, which can extend beyond just the chat AI itself, for example retrieving recent information from the internet not present in the chat AI's training data. This workflow is analogous to ChatGPT Plugins.
 
-Parsing the model output to invoke tools typically requires a number of shennanigans, but simpleaichat uses [a neat trick](https://github.com/minimaxir/simpleaichat/blob/main/PROMPTS.md#tools) to make it fast and reliable! Additionally, the specified tools return a `context` for ChatGPT to draw from for its final response, and can return a dictionary which you can also populate with arbitrary metadata for debugging and postprocessing.
+Parsing the model output to invoke tools typically requires a number of shennanigans, but simpleaichat uses [a neat trick](https://github.com/minimaxir/simpleaichat/blob/main/PROMPTS.md#tools) to make it fast and reliable! Additionally, the specified tools return a `context` for ChatGPT to draw from for its final response, and tools you specify can return a dictionary which you can also populate with arbitrary metadata for debugging and postprocessing. Each generation returns a dictionary with the `response` and the `tool` function used, which can be used to set up control flows akin to Agents.
 
 You will need to specify functions with docstrings which provide hints for the AI to select them:
 
 ```py3
 from simpleaichat.utils import wikipedia_search, wikipedia_lookup
 
+# This uses the Wikipedia Search API.
+# Results from it are nondeterministic, your mileage will vary.
 def search(query):
     """Search the internet."""
     wiki_matches = wikipedia_search(query, n=3)
-    return {"context": "\n---\n".join(wiki_matches), "titles": wiki_matches}
+    return {"context": ", ".join(wiki_matches), "titles": wiki_matches}
 
 def lookup(query):
     """Lookup more information about a topic."""
     page = wikipedia_search_lookup(query, sentences=3)
-    return {"context": page, "titles": query}
+    return page
 
 params = {"temperature": 0.0, "max_tokens": 100}
 ai = AIChat(params=params, console=False)
 
-ai("What is a good tourist attraction in California?", tools=[search, lookup])
+ai("San Francisco tourist attractions", tools=[search, lookup])
 ```
 
 ```txt
-{'context': 'Tourist attraction\n---\nBuena Park, California\n---\nLombard Street (San Francisco)',
- 'titles': ['Tourist attraction',
-  'Buena Park, California',
+{'context': "Fisherman's Wharf, San Francisco, Tourist attractions in the United States, Lombard Street (San Francisco)",
+ 'titles': ["Fisherman's Wharf, San Francisco",
+  'Tourist attractions in the United States',
   'Lombard Street (San Francisco)'],
  'tool': 'search',
- 'response': "There are many great tourist attractions in California, but two popular ones are Buena Park, which is home to several theme parks such as Knott's Berry Farm and Disneyland, and Lombard Street in San Francisco, which is known for its steep, winding road and beautiful views of the city."}
+ 'response': "There are many popular tourist attractions in San Francisco, including Fisherman's Wharf and Lombard Street. Fisherman's Wharf is a bustling waterfront area known for its seafood restaurants, souvenir shops, and sea lion sightings. Lombard Street, on the other hand, is a famous winding street with eight hairpin turns that attract visitors from all over the world. Both of these attractions are must-sees for anyone visiting San Francisco."}
 ```
 
 ```py3
@@ -225,9 +227,8 @@ ai("Lombard Street?", tools=[search, lookup])
 
 ```
 {'context': 'Lombard Street is an east–west street in San Francisco, California that is famous for a steep, one-block section with eight hairpin turns. Stretching from The Presidio east to The Embarcadero (with a gap on Telegraph Hill), most of the street\'s western segment is a major thoroughfare designated as part of U.S. Route 101. The famous one-block section, claimed to be "the crookedest street in the world", is located along the eastern segment in the Russian Hill neighborhood.',
- 'titles': 'Lombard Street?',
  'tool': 'lookup',
- 'response': 'Yes, Lombard Street is a famous tourist attraction in San Francisco, California. It is known for its steep, one-block section with eight hairpin turns, which is claimed to be "the crookedest street in the world". The street is located in the Russian Hill neighborhood and is a popular spot for tourists to take photos and enjoy the beautiful views of the city.'}
+ 'response': 'Lombard Street is a famous street in San Francisco, California known for its steep, one-block section with eight hairpin turns. It stretches from The Presidio to The Embarcadero, with a gap on Telegraph Hill. The western segment of the street is a major thoroughfare designated as part of U.S. Route 101, while the famous one-block section, claimed to be "the crookedest street in the world", is located along the eastern segment in the Russian Hill'}
 ```
 
 ```py3
@@ -235,7 +236,7 @@ ai("Thanks for your help!", tools=[search, lookup])
 ```
 
 ```txt
-{'response': "You're welcome! If you have any more questions, feel free to ask.",
+{'response': "You're welcome! If you have any more questions or need further assistance, feel free to ask.",
  'tool': None}
 ```
 
