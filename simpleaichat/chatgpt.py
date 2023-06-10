@@ -13,7 +13,9 @@ tool_prompt = """From the list of tools below:
 
 
 class ChatGPTSession(ChatSession):
-    api_url: HttpUrl = "https://api.openai.com/v1/chat/completions"
+    api_url: HttpUrl = "https://api.openai.com"
+    api_type: str = "openai"
+    api_version: str = "2023-05-15-preview"
     input_fields: Set[str] = {"role", "content"}
     system: str = "You are a helpful assistant."
     params: Dict[str, Any] = {"temperature": 0.7}
@@ -25,10 +27,18 @@ class ChatGPTSession(ChatSession):
         params: Dict[str, Any] = None,
         stream: bool = False,
     ):
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
-        }
+        if self.api_type == "azure":
+            headers = {
+                "Content-Type": "application/json",
+                "api-key": f"{self.auth['api_key'].get_secret_value()}",
+            }
+            endpoint = f"{self.api_url}/openai/deployments/{self.model}/chat/completions?api-version={self.api_version}"
+        else:
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
+            }
+            endpoint = f"{self.api_url}/v1/chat/completions"
 
         system_message = ChatMessage(role="system", content=system or self.system)
         user_message = ChatMessage(role="user", content=prompt)
@@ -41,7 +51,7 @@ class ChatGPTSession(ChatSession):
             **gen_params,
         }
 
-        return headers, data, user_message
+        return endpoint, headers, data, user_message
 
     def gen(
         self,
@@ -51,10 +61,10 @@ class ChatGPTSession(ChatSession):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
     ):
-        headers, data, user_message = self.prepare_request(prompt, system, params)
+        endpoint, headers, data, user_message = self.prepare_request(prompt, system, params)
 
         r = client.post(
-            self.api_url,
+            endpoint,
             json=data,
             headers=headers,
             timeout=None,
@@ -89,13 +99,13 @@ class ChatGPTSession(ChatSession):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
     ):
-        headers, data, user_message = self.prepare_request(
+        endpoint, headers, data, user_message = self.prepare_request(
             prompt, system, params, stream=True
         )
 
         with client.stream(
             "POST",
-            self.api_url,
+            endpoint,
             json=data,
             headers=headers,
             timeout=None,
@@ -200,10 +210,10 @@ class ChatGPTSession(ChatSession):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
     ):
-        headers, data, user_message = self.prepare_request(prompt, system, params)
+        endpoint, headers, data, user_message = self.prepare_request(prompt, system, params)
 
         r = await client.post(
-            self.api_url,
+            endpoint,
             json=data,
             headers=headers,
             timeout=None,
@@ -235,13 +245,13 @@ class ChatGPTSession(ChatSession):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
     ):
-        headers, data, user_message = self.prepare_request(
+        endpoint, headers, data, user_message = self.prepare_request(
             prompt, system, params, stream=True
         )
 
         async with client.stream(
             "POST",
-            self.api_url,
+            endpoint,
             json=data,
             headers=headers,
             timeout=None,
