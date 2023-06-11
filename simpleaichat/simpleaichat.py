@@ -2,6 +2,7 @@ import os
 import datetime
 import dateutil
 from uuid import uuid4, UUID
+from contextlib import contextmanager
 import csv
 
 from pydantic import BaseModel
@@ -106,6 +107,15 @@ class AIChat(BaseModel):
                 self.default_session = None
         del self.sessions[sess.id]
         del sess
+
+    @contextmanager
+    def session(self, **kwargs):
+        sess = self.new_session(return_session=True, **kwargs)
+        self.sessions[sess.id] = sess
+        try:
+            yield sess
+        finally:
+            self.delete_session(sess.id)
 
     def __call__(
         self,
