@@ -48,7 +48,7 @@ And with that, you'll be thrust directly into an interactive chat!
 
 This AI chat will mimic the behavior of OpenAI's webapp, but on your local computer!
 
-You can also pass the API key by storing it in an `.env` file with a `OPEN_AI_KEY` field in the working directory (recommended), or by setting the environment variable of `OPEN_AI_KEY` directly to the API key.
+You can also pass the API key by storing it in an `.env` file with a `OPENAI_API_KEY` field in the working directory (recommended), or by setting the environment variable of `OPENAI_API_KEY` directly to the API key.
 
 But what about creating your own custom conversations? That's where things get fun. Just input whatever person, place or thing, fictional or nonfictional, that you want to chat with!
 
