@@ -91,6 +91,8 @@ ai = AIChat(system="You are a helpful assistant.")
 ai = AIChat(console=False)  # same as above
 ```
 
+You can also pass in a `model` parameter, such as `model="gpt-4"` if you have access to GPT-4, or `model="gpt-3.5-turbo-16k"` for a larger-context-window ChatGPT.
+
 You can then feed the new `ai` class with user input, and it will return and save the response from ChatGPT:
 
 ```py3
