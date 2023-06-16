@@ -24,6 +24,8 @@ class ChatGPTSession(ChatSession):
         system: str = None,
         params: Dict[str, Any] = None,
         stream: bool = False,
+        input_schema: Any = None,
+        output_schema: Any = None,
     ):
         headers = {
             "Content-Type": "application/json",
@@ -31,7 +33,12 @@ class ChatGPTSession(ChatSession):
         }
 
         system_message = ChatMessage(role="system", content=system or self.system)
-        user_message = ChatMessage(role="user", content=prompt)
+        if not input_schema:
+            user_message = ChatMessage(role="user", content=prompt)
+        else:
+            user_message = ChatMessage(
+                role="function", name=input_schema.__name__, content=prompt.json()
+            )
 
         gen_params = params or self.params
         data = {
@@ -41,7 +48,26 @@ class ChatGPTSession(ChatSession):
             **gen_params,
         }
 
+        # Add function calling parameters if a schema is provided
+        if input_schema or output_schema:
+            functions = []
+            if input_schema:
+                input_function = self.schema_to_function(input_schema)
+                functions.append(input_function)
+            if output_schema:
+                output_function = self.schema_to_function(output_schema)
+                functions.append(output_function)
+                data["function_call"] = {"name": output_schema.__name__}
+            data["functions"] = functions
+
         return headers, data, user_message
+
+    def schema_to_function(self, schema: Any):
+        return {
+            "name": schema.__name__,
+            "description": schema.__doc__,
+            "parameters": schema.schema(),
+        }
 
     def gen(
         self,
@@ -50,8 +76,12 @@ class ChatGPTSession(ChatSession):
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
+        input_schema: Any = None,
+        output_schema: Any = None,
     ):
-        headers, data, user_message = self.prepare_request(prompt, system, params)
+        headers, data, user_message = self.prepare_request(
+            prompt, system, params, False, input_schema, output_schema
+        )
 
         r = client.post(
             self.api_url,
@@ -62,22 +92,25 @@ class ChatGPTSession(ChatSession):
         r = r.json()
 
         try:
-            content = r["choices"][0]["message"]["content"]
-            assistant_message = ChatMessage(
-                role=r["choices"][0]["message"]["role"],
-                content=content,
-                prompt_length=r["usage"]["prompt_tokens"],
-                completion_length=r["usage"]["completion_tokens"],
-                total_length=r["usage"]["total_tokens"],
-            )
+            if not output_schema:
+                content = r["choices"][0]["message"]["content"]
+                assistant_message = ChatMessage(
+                    role=r["choices"][0]["message"]["role"],
+                    content=content,
+                    prompt_length=r["usage"]["prompt_tokens"],
+                    completion_length=r["usage"]["completion_tokens"],
+                    total_length=r["usage"]["total_tokens"],
+                )
+                self.add_messages(user_message, assistant_message, save_messages)
+            else:
+                content = r["choices"][0]["message"]["function_call"]["arguments"]
+                content = output_schema.parse_raw(content)
 
             self.total_prompt_length += r["usage"]["prompt_tokens"]
             self.total_completion_length += r["usage"]["completion_tokens"]
             self.total_length += r["usage"]["total_tokens"]
         except KeyError:
             raise KeyError(f"No AI generation: {r}")
-
-        self.add_messages(user_message, assistant_message, save_messages)
 
         return content
 

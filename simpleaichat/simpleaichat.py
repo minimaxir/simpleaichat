@@ -119,12 +119,14 @@ class AIChat(BaseModel):
 
     def __call__(
         self,
-        prompt: str,
+        prompt: Union[str, Any],
         id: Union[str, UUID] = None,
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
         tools: List[Any] = None,
+        input_schema: Any = None,
+        output_schema: Any = None,
     ) -> str:
         sess = self.get_session(id)
         if tools:
@@ -146,6 +148,8 @@ class AIChat(BaseModel):
                 system=system,
                 save_messages=save_messages,
                 params=params,
+                input_schema=input_schema,
+                output_schema=output_schema,
             )
 
     def stream(
