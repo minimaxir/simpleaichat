@@ -104,7 +104,7 @@ class ChatGPTSession(ChatSession):
                 self.add_messages(user_message, assistant_message, save_messages)
             else:
                 content = r["choices"][0]["message"]["function_call"]["arguments"]
-                content = output_schema.parse_raw(content)
+                content = orjson.loads(content)
 
             self.total_prompt_length += r["usage"]["prompt_tokens"]
             self.total_completion_length += r["usage"]["completion_tokens"]
