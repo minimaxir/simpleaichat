@@ -20,6 +20,8 @@ def now_tz():
 class ChatMessage(BaseModel):
     role: str
     content: str
+    name: Optional[str]
+    function_call: Optional[str]
     received_at: datetime.datetime = Field(default_factory=now_tz)
     prompt_length: Optional[int]
     completion_length: Optional[int]
