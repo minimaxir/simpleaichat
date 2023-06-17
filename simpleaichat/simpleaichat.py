@@ -234,6 +234,8 @@ class AIChat(BaseModel):
             exclude={"auth", "api_url", "input_fields"},
             exclude_none=True,
         )
+        if format == "dict":
+            return sess_dict
         out_path = f"test.{format}"
         if format == "csv":
             with open(out_path, "w", encoding="utf-8") as f:
