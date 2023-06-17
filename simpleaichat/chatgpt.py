@@ -63,6 +63,7 @@ class ChatGPTSession(ChatSession):
         return headers, data, user_message
 
     def schema_to_function(self, schema: Any):
+        assert schema.__doc__, f"{schema.__name__} is missing a docstring."
         return {
             "name": schema.__name__,
             "description": schema.__doc__,
