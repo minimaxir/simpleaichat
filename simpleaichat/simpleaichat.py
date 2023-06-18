@@ -241,7 +241,15 @@ class AIChat(BaseModel):
         out_path = f"test.{format}"
         if format == "csv":
             with open(out_path, "w", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=list(ChatMessage.__fields__.keys()))
+                fields = [
+                    "role",
+                    "content",
+                    "received_at",
+                    "prompt_length",
+                    "completion_length",
+                    "total_length",
+                ]
+                w = csv.DictWriter(f, fieldnames=fields)
                 w.writeheader()
                 for message in sess_dict["messages"]:
                     # datetime must be in common format to be loaded into spreadsheet
