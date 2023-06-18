@@ -75,9 +75,12 @@ class ChatSession(BaseModel):
             else self.messages
         )
         return (
-            [system_message.dict(include=self.input_fields)]
-            + [m.dict(include=self.input_fields) for m in recent_messages]
-            + [user_message.dict(include=self.input_fields)]
+            [system_message.dict(include=self.input_fields, exclude_none=True)]
+            + [
+                m.dict(include=self.input_fields, exclude_none=True)
+                for m in recent_messages
+            ]
+            + [user_message.dict(include=self.input_fields, exclude_none=True)]
         )
 
     def add_messages(

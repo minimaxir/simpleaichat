@@ -14,7 +14,7 @@ tool_prompt = """From the list of tools below:
 
 class ChatGPTSession(ChatSession):
     api_url: HttpUrl = "https://api.openai.com/v1/chat/completions"
-    input_fields: Set[str] = {"role", "content"}
+    input_fields: Set[str] = {"role", "content", "name"}
     system: str = "You are a helpful assistant."
     params: Dict[str, Any] = {"temperature": 0.7}
 
@@ -36,8 +36,11 @@ class ChatGPTSession(ChatSession):
         if not input_schema:
             user_message = ChatMessage(role="user", content=prompt)
         else:
+            assert isinstance(
+                prompt, input_schema
+            ), f"prompt must be an instance of {input_schema.__name__}"
             user_message = ChatMessage(
-                role="function", name=input_schema.__name__, content=prompt.json()
+                role="function", content=prompt.json(), name=input_schema.__name__
             )
 
         gen_params = params or self.params
