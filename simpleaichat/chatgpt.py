@@ -236,8 +236,12 @@ class ChatGPTSession(ChatSession):
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
+        input_schema: Any = None,
+        output_schema: Any = None,
     ):
-        headers, data, user_message = self.prepare_request(prompt, system, params)
+        headers, data, user_message = self.prepare_request(
+            prompt, system, params, False, input_schema, output_schema
+        )
 
         r = await client.post(
             self.api_url,
@@ -247,20 +251,26 @@ class ChatGPTSession(ChatSession):
         )
         r = r.json()
 
-        content = r["choices"][0]["message"]["content"]
-        assistant_message = ChatMessage(
-            role=r["choices"][0]["message"]["role"],
-            content=content,
-            prompt_length=r["usage"]["prompt_tokens"],
-            completion_length=r["usage"]["completion_tokens"],
-            total_length=r["usage"]["total_tokens"],
-        )
+        try:
+            if not output_schema:
+                content = r["choices"][0]["message"]["content"]
+                assistant_message = ChatMessage(
+                    role=r["choices"][0]["message"]["role"],
+                    content=content,
+                    prompt_length=r["usage"]["prompt_tokens"],
+                    completion_length=r["usage"]["completion_tokens"],
+                    total_length=r["usage"]["total_tokens"],
+                )
+                self.add_messages(user_message, assistant_message, save_messages)
+            else:
+                content = r["choices"][0]["message"]["function_call"]["arguments"]
+                content = orjson.loads(content)
 
-        self.total_prompt_length += r["usage"]["prompt_tokens"]
-        self.total_completion_length += r["usage"]["completion_tokens"]
-        self.total_length += r["usage"]["total_tokens"]
-
-        self.add_messages(user_message, assistant_message, save_messages)
+            self.total_prompt_length += r["usage"]["prompt_tokens"]
+            self.total_completion_length += r["usage"]["completion_tokens"]
+            self.total_length += r["usage"]["total_tokens"]
+        except KeyError:
+            raise KeyError(f"No AI generation: {r}")
 
         return content
 

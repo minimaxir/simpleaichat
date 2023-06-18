@@ -332,6 +332,8 @@ class AsyncAIChat(AIChat):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
         tools: List[Any] = None,
+        input_schema: Any = None,
+        output_schema: Any = None,
     ) -> str:
         # TODO: move to a __post_init__ in Pydantic 2.0
         if isinstance(self.client, Client):
@@ -356,6 +358,8 @@ class AsyncAIChat(AIChat):
                 system=system,
                 save_messages=save_messages,
                 params=params,
+                input_schema=input_schema,
+                output_schema=output_schema,
             )
 
     async def stream(
