@@ -8,9 +8,7 @@ load_dotenv()
 
 
 def interactive_chat(character=None, character_command=None, prime=True):
-    gpt_api_key = os.getenv("OPENAI_API_KEY")
-    if not gpt_api_key:
-        gpt_api_key = getpass("Input your OpenAI key here: ")
+    gpt_api_key = os.getenv("OPENAI_API_KEY") or getpass("Input your OpenAI key here: ")
     assert gpt_api_key, "An API key was not defined."
     _ = AIChat(character=character, character_command=character_command, prime=prime)
     return
