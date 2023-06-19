@@ -119,12 +119,14 @@ class AIChat(BaseModel):
 
     def __call__(
         self,
-        prompt: str,
+        prompt: Union[str, Any],
         id: Union[str, UUID] = None,
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
         tools: List[Any] = None,
+        input_schema: Any = None,
+        output_schema: Any = None,
     ) -> str:
         sess = self.get_session(id)
         if tools:
@@ -146,6 +148,8 @@ class AIChat(BaseModel):
                 system=system,
                 save_messages=save_messages,
                 params=params,
+                input_schema=input_schema,
+                output_schema=output_schema,
             )
 
     def stream(
@@ -155,6 +159,7 @@ class AIChat(BaseModel):
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
+        input_schema: Any = None,
     ) -> str:
         sess = self.get_session(id)
         return sess.stream(
@@ -163,6 +168,7 @@ class AIChat(BaseModel):
             system=system,
             save_messages=save_messages,
             params=params,
+            input_schema=input_schema,
         )
 
     def build_system(
@@ -237,7 +243,15 @@ class AIChat(BaseModel):
         out_path = f"test.{format}"
         if format == "csv":
             with open(out_path, "w", encoding="utf-8") as f:
-                w = csv.DictWriter(f, fieldnames=list(ChatMessage.__fields__.keys()))
+                fields = [
+                    "role",
+                    "content",
+                    "received_at",
+                    "prompt_length",
+                    "completion_length",
+                    "total_length",
+                ]
+                w = csv.DictWriter(f, fieldnames=fields)
                 w.writeheader()
                 for message in sess_dict["messages"]:
                     # datetime must be in common format to be loaded into spreadsheet
@@ -320,6 +334,8 @@ class AsyncAIChat(AIChat):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
         tools: List[Any] = None,
+        input_schema: Any = None,
+        output_schema: Any = None,
     ) -> str:
         # TODO: move to a __post_init__ in Pydantic 2.0
         if isinstance(self.client, Client):
@@ -344,6 +360,8 @@ class AsyncAIChat(AIChat):
                 system=system,
                 save_messages=save_messages,
                 params=params,
+                input_schema=input_schema,
+                output_schema=output_schema,
             )
 
     async def stream(
@@ -353,6 +371,7 @@ class AsyncAIChat(AIChat):
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
+        input_schema: Any = None,
     ) -> str:
         # TODO: move to a __post_init__ in Pydantic 2.0
         if isinstance(self.client, Client):
@@ -364,4 +383,5 @@ class AsyncAIChat(AIChat):
             system=system,
             save_messages=save_messages,
             params=params,
+            input_schema=input_schema,
         )

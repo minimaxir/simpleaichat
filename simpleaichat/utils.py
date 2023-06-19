@@ -1,5 +1,6 @@
 import httpx
 from typing import List, Union
+from pydantic import Field
 
 WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php"
 
@@ -80,3 +81,7 @@ async def wikipedia_search_lookup_async(query: str, sentences: int = 1) -> str:
     return await wikipedia_lookup_async(
         await wikipedia_search_async(query, 1), sentences
     )
+
+
+def fd(description: str):
+    return Field(description=description)
