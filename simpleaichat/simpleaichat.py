@@ -128,19 +128,7 @@ class AIChat(BaseModel):
         output_schema: Any = None,
     ) -> str:
         sess = self.get_session(id)
-        if tools:
-            for tool in tools:
-                assert tool.__doc__, f"Tool {tool} does not have a docstring."
-            assert len(tools) <= 9, "You can only have a maximum of 9 tools."
-            return sess.gen_with_tools(
-                prompt,
-                tools,
-                client=self.client,
-                system=system,
-                save_messages=save_messages,
-                params=params,
-            )
-        else:
+        if not tools:
             return sess.gen(
                 prompt,
                 client=self.client,
@@ -150,6 +138,17 @@ class AIChat(BaseModel):
                 input_schema=input_schema,
                 output_schema=output_schema,
             )
+        for tool in tools:
+            assert tool.__doc__, f"Tool {tool} does not have a docstring."
+        assert len(tools) <= 9, "You can only have a maximum of 9 tools."
+        return sess.gen_with_tools(
+            prompt,
+            tools,
+            client=self.client,
+            system=system,
+            save_messages=save_messages,
+            params=params,
+        )
 
     def stream(
         self,
@@ -343,19 +342,7 @@ class AsyncAIChat(AIChat):
         if isinstance(self.client, Client):
             self.client = AsyncClient()
         sess = self.get_session(id)
-        if tools:
-            for tool in tools:
-                assert tool.__doc__, f"Tool {tool} does not have a docstring."
-            assert len(tools) <= 9, "You can only have a maximum of 9 tools."
-            return await sess.gen_with_tools_async(
-                prompt,
-                tools,
-                client=self.client,
-                system=system,
-                save_messages=save_messages,
-                params=params,
-            )
-        else:
+        if not tools:
             return await sess.gen_async(
                 prompt,
                 client=self.client,
@@ -365,6 +352,17 @@ class AsyncAIChat(AIChat):
                 input_schema=input_schema,
                 output_schema=output_schema,
             )
+        for tool in tools:
+            assert tool.__doc__, f"Tool {tool} does not have a docstring."
+        assert len(tools) <= 9, "You can only have a maximum of 9 tools."
+        return await sess.gen_with_tools_async(
+            prompt,
+            tools,
+            client=self.client,
+            system=system,
+            save_messages=save_messages,
+            params=params,
+        )
 
     async def stream(
         self,
