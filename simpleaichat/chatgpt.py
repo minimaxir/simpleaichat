@@ -52,18 +52,24 @@ class ChatGPTSession(ChatSession):
         }
 
         # Add function calling parameters if a schema is provided
-        if input_schema or output_schema:
-            functions = []
-            if input_schema:
-                input_function = self.schema_to_function(input_schema)
-                functions.append(input_function)
+        if input_schema:
+            input_function = self.schema_to_function(input_schema)
+            functions = [input_function]
             if output_schema:
-                output_function = self.schema_to_function(output_schema)
-                functions.append(output_function)
-                data["function_call"] = {"name": output_schema.__name__}
+                self.prepare_function(output_schema, functions, data)
+            data["functions"] = functions
+
+        elif output_schema:
+            functions = []
+            self.prepare_function(output_schema, functions, data)
             data["functions"] = functions
 
         return headers, data, user_message
+
+    def prepare_function(self, output_schema, functions, data):
+        output_function = self.schema_to_function(output_schema)
+        functions.append(output_function)
+        data["function_call"] = {"name": output_schema.__name__}
 
     def schema_to_function(self, schema: Any):
         assert schema.__doc__, f"{schema.__name__} is missing a docstring."
