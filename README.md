@@ -23,6 +23,7 @@ Here's some fun, hackable examples on how simpleaichat works:
 - Creating a [Python coding assistant](examples/notebooks/simpleaichat_coding.ipynb) without any unnecessary accompanying output, allowing 5x faster generation at 1/3rd the cost. ([Colab](https://colab.research.google.com/github/minimaxir/simpleaichat/blob/main/examples/notebooks/simpleaichat_coding.ipynb))
 - Allowing simpleaichat to [provide inline tips](examples/notebooks/chatgpt_inline_tips.ipynb) following ChatGPT usage guidelines. ([Colab](https://colab.research.google.com/github/minimaxir/simpleaichat/blob/main/examples/notebooks/chatgpt_inline_tips.ipynb))
 - Async interface for [conducting many chats](examples/notebooks/simpleaichat_async.ipynb) in the time it takes to receive one AI message. ([Colab](https://colab.research.google.com/github/minimaxir/simpleaichat/blob/main/examples/notebooks/simpleaichat_async.ipynb))
+- Create your own Tabletop RPG (TTRPG) setting and campaign by using [advanced structured data models](examples/notebooks/schema_ttrpg.ipynb). ([Colab](https://colab.research.google.com/github/minimaxir/simpleaichat/blob/main/examples/notebooks/schema_ttrpg.ipynb))
 
 ## Installation
 
@@ -184,6 +185,41 @@ This JSON is really quite sweet!
 ```txt
 {"titre": "Un tableau d'entiers.", "tableau": [-1, 0, 1]}
 ```
+
+Newer versions of ChatGPT also support "[function calling](https://platform.openai.com/docs/guides/gpt/function-calling)", but the real benefit of that feature is the ability for ChatGPT to support structured input and/or output, which now opens up a wide variety of applications! simpleaichat streamlines the workflow to allow you to just pass an `input_schema` and/or an `output_schema`.
+
+You can construct a schema using a [pydantic](https://docs.pydantic.dev/latest/) BaseModel.
+
+```py3
+from pydantic import BaseModel, Field
+
+ai = AIChat(
+    console=False,
+    save_messages=False,  # with schema I/O, messages are never saved
+    model="gpt-3.5-turbo-0613",
+    params={"temperature": 0.0},
+)
+
+class get_event_metadata(BaseModel):
+    """Event information"""
+
+    description: str = Field(description="Description of event")
+    city: str = Field(description="City where event occured")
+    year: int = Field(description="Year when event occured")
+    month: str = Field(description="Month when event occured")
+
+# returns a dict, with keys ordered as in the schema
+ai("First iPhone announcement", output_schema=get_event_metadata)
+```
+
+```txt
+{'description': 'The first iPhone was announced by Apple Inc.',
+ 'city': 'San Francisco',
+ 'year': 2007,
+ 'month': 'January'}
+```
+
+See the [TTRPG Generator Notebook](examples/notebooks/schema_ttrpg.ipynb) for a more elaborate demonstration of schema capabilities.
 
 ### Tools
 
