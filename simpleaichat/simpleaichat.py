@@ -267,7 +267,7 @@ class AIChat(BaseModel):
             with open(output_path, "wb") as f:
                 f.write(
                     orjson.dumps(
-                        sess_dict, option=orjson.OPT_INDENT_2 if not minify else None
+                        sess_dict, option=None if minify else orjson.OPT_INDENT_2
                     )
                 )
 
