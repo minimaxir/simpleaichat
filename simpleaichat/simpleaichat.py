@@ -102,9 +102,8 @@ class AIChat(BaseModel):
 
     def delete_session(self, id: Union[str, UUID] = None) -> None:
         sess = self.get_session(id)
-        if self.default_session:
-            if sess.id == self.default_session.id:
-                self.default_session = None
+        if self.default_session and sess.id == self.default_session.id:
+            self.default_session = None
         del self.sessions[sess.id]
         del sess
 
