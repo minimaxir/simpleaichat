@@ -159,6 +159,7 @@ class AIChat(BaseModel):
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
+        input_schema: Any = None,
     ) -> str:
         sess = self.get_session(id)
         return sess.stream(
@@ -167,6 +168,7 @@ class AIChat(BaseModel):
             system=system,
             save_messages=save_messages,
             params=params,
+            input_schema=input_schema,
         )
 
     def build_system(
@@ -369,6 +371,7 @@ class AsyncAIChat(AIChat):
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
+        input_schema: Any = None,
     ) -> str:
         # TODO: move to a __post_init__ in Pydantic 2.0
         if isinstance(self.client, Client):
@@ -380,4 +383,5 @@ class AsyncAIChat(AIChat):
             system=system,
             save_messages=save_messages,
             params=params,
+            input_schema=input_schema,
         )

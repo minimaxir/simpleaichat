@@ -125,9 +125,10 @@ class ChatGPTSession(ChatSession):
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
+        input_schema: Any = None,
     ):
         headers, data, user_message = self.prepare_request(
-            prompt, system, params, stream=True
+            prompt, system, params, True, input_schema
         )
 
         with client.stream(
@@ -281,9 +282,10 @@ class ChatGPTSession(ChatSession):
         system: str = None,
         save_messages: bool = None,
         params: Dict[str, Any] = None,
+        input_schema: Any = None,
     ):
         headers, data, user_message = self.prepare_request(
-            prompt, system, params, stream=True
+            prompt, system, params, True, input_schema
         )
 
         async with client.stream(
