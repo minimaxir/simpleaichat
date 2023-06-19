@@ -101,6 +101,7 @@ class ChatGPTSession(ChatSession):
                 assistant_message = ChatMessage(
                     role=r["choices"][0]["message"]["role"],
                     content=content,
+                    finish_reason=r["choices"][0]["finish_reason"],
                     prompt_length=r["usage"]["prompt_tokens"],
                     completion_length=r["usage"]["completion_tokens"],
                     total_length=r["usage"]["total_tokens"],
@@ -258,6 +259,7 @@ class ChatGPTSession(ChatSession):
                 assistant_message = ChatMessage(
                     role=r["choices"][0]["message"]["role"],
                     content=content,
+                    finish_reason=r["choices"][0]["finish_reason"],
                     prompt_length=r["usage"]["prompt_tokens"],
                     completion_length=r["usage"]["completion_tokens"],
                     total_length=r["usage"]["total_tokens"],

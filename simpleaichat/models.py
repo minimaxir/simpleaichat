@@ -23,6 +23,7 @@ class ChatMessage(BaseModel):
     name: Optional[str]
     function_call: Optional[str]
     received_at: datetime.datetime = Field(default_factory=now_tz)
+    finish_reason: Optional[str]
     prompt_length: Optional[int]
     completion_length: Optional[int]
     total_length: Optional[int]
@@ -32,9 +33,6 @@ class ChatMessage(BaseModel):
         json_dumps = orjson_dumps
 
     def __str__(self) -> str:
-        return self.content
-
-    def __repr__(self) -> str:
         return self.content
 
 
