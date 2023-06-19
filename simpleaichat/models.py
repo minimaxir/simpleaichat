@@ -92,10 +92,6 @@ class ChatSession(BaseModel):
         # instead of the default
         to_save = isinstance(save_messages, bool)
 
-        if to_save:
-            if save_messages:
-                self.messages.append(user_message)
-                self.messages.append(assistant_message)
-        elif self.save_messages:
+        if to_save and save_messages or not to_save and self.save_messages:
             self.messages.append(user_message)
             self.messages.append(assistant_message)
