@@ -233,16 +233,20 @@ class AIChat(BaseModel):
 
     # Save/Load Chats given a session id
     def save_session(
-        self, id: Union[str, UUID] = None, format: str = "csv", minify: bool = False
+        self,
+        output_path: str = None,
+        id: Union[str, UUID] = None,
+        format: str = "csv",
+        minify: bool = False,
     ):
         sess = self.get_session(id)
         sess_dict = sess.dict(
             exclude={"auth", "api_url", "input_fields"},
             exclude_none=True,
         )
-        out_path = f"test.{format}"
+        output_path = output_path or f"chat_session.{format}"
         if format == "csv":
-            with open(out_path, "w", encoding="utf-8") as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 fields = [
                     "role",
                     "content",
@@ -262,7 +266,7 @@ class AIChat(BaseModel):
                     )
                     w.writerow(message)
         elif format == "json":
-            with open(out_path, "wb") as f:
+            with open(output_path, "wb") as f:
                 f.write(
                     orjson.dumps(
                         sess_dict, option=orjson.OPT_INDENT_2 if not minify else None
