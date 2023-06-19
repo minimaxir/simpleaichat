@@ -173,7 +173,6 @@ class AIChat(BaseModel):
     def build_system(
         self, character: str = None, character_command: str = None, system: str = None
     ) -> str:
-        default = "You are a helpful assistant."
         if character:
             character_prompt = """
             You must follow ALL these rules in all responses:
@@ -193,7 +192,7 @@ class AIChat(BaseModel):
         elif system:
             return system
         else:
-            return default
+            return "You are a helpful assistant."
 
     def interactive_console(self, character: str = None, prime: bool = True) -> None:
         console = Console(highlight=False)
