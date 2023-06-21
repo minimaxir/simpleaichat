@@ -26,6 +26,7 @@ class ChatGPTSession(ChatSession):
         stream: bool = False,
         input_schema: Any = None,
         output_schema: Any = None,
+        is_function_calling_required: bool = True,
     ):
         headers = {
             "Content-Type": "application/json",
@@ -60,7 +61,8 @@ class ChatGPTSession(ChatSession):
             if output_schema:
                 output_function = self.schema_to_function(output_schema)
                 functions.append(output_function)
-                data["function_call"] = {"name": output_schema.__name__}
+                if is_function_calling_required:
+                    data["function_call"] = {"name": output_schema.__name__}
             data["functions"] = functions
 
         return headers, data, user_message
