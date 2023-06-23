@@ -33,7 +33,7 @@ class ChatMessage(BaseModel):
         json_dumps = orjson_dumps
 
     def __str__(self) -> str:
-        return self.content
+        return str(self.dict(exclude_none=True))
 
 
 class ChatSession(BaseModel):
