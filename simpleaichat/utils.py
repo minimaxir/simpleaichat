@@ -1,3 +1,4 @@
+import os
 import httpx
 from typing import List, Union
 from pydantic import Field
@@ -53,7 +54,7 @@ async def wikipedia_search_async(query: str, n: int = 1) -> Union[str, List[str]
         "srprop": "",
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(proxies=os.getenv("https_proxy")) as client:
         r_search = await client.get(WIKIPEDIA_API_URL, params=SEARCH_PARAMS)
     results = [x["title"] for x in r_search.json()["query"]["search"]]
 
@@ -72,7 +73,7 @@ async def wikipedia_lookup_async(query: str, sentences: int = 1) -> str:
         "titles": query,
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(proxies=os.getenv("https_proxy")) as client:
         r_lookup = await client.get(WIKIPEDIA_API_URL, params=LOOKUP_PARAMS)
     return r_lookup.json()["query"]["pages"][0]["extract"]
 
