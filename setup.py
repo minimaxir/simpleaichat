@@ -18,7 +18,7 @@ setup(
     },
     python_requires=">=3.8",
     install_requires=[
-        "pydantic>=1.10",
+        "pydantic>=2.0",
         "fire>=0.3.0",
         "httpx>=0.24.1",
         "python-dotenv>=1.0.0",
