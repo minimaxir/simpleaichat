@@ -43,7 +43,9 @@ class ChatGPTSession(ChatSession):
                 prompt, input_schema
             ), f"prompt must be an instance of {input_schema.__name__}"
             user_message = ChatMessage(
-                role="function", content=prompt.json(), name=input_schema.__name__
+                role="function",
+                content=prompt.model_dump_json(),
+                name=input_schema.__name__,
             )
 
         gen_params = params or self.params
