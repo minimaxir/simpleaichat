@@ -5,7 +5,7 @@ from uuid import uuid4, UUID
 from contextlib import contextmanager, asynccontextmanager
 import csv
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from httpx import Client, AsyncClient
 from typing import List, Dict, Union, Optional, Any
 import orjson
@@ -13,21 +13,17 @@ from dotenv import load_dotenv
 from rich.console import Console
 
 from .utils import wikipedia_search_lookup
-from .models import ChatMessage, ChatSession, orjson_dumps
+from .models import ChatMessage, ChatSession
 from .chatgpt import ChatGPTSession
 
 load_dotenv()
 
 
 class AIChat(BaseModel):
-    client: Union[Client, AsyncClient]
+    client: Any
     default_session: Optional[ChatSession]
     sessions: Dict[Union[str, UUID], ChatSession] = {}
-
-    class Config:
-        arbitrary_types_allowed = True
-        json_loads = orjson.loads
-        json_dumps = orjson_dumps
+    model_config: ConfigDict(arbitrary_types_allowed=True)
 
     def __init__(
         self,
@@ -222,7 +218,7 @@ class AIChat(BaseModel):
 
     def __str__(self) -> str:
         if self.default_session:
-            return self.default_session.json(
+            return self.default_session.model_dump_json(
                 exclude={"api_key", "api_url"},
                 exclude_none=True,
                 option=orjson.OPT_INDENT_2,
@@ -240,7 +236,7 @@ class AIChat(BaseModel):
         minify: bool = False,
     ):
         sess = self.get_session(id)
-        sess_dict = sess.dict(
+        sess_dict = sess.model_dump(
             exclude={"auth", "api_url", "input_fields"},
             exclude_none=True,
         )

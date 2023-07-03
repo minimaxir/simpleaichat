@@ -20,20 +20,16 @@ def now_tz():
 class ChatMessage(BaseModel):
     role: str
     content: str
-    name: Optional[str]
-    function_call: Optional[str]
+    name: Optional[str] = None
+    function_call: Optional[str] = None
     received_at: datetime.datetime = Field(default_factory=now_tz)
-    finish_reason: Optional[str]
-    prompt_length: Optional[int]
-    completion_length: Optional[int]
-    total_length: Optional[int]
-
-    class Config:
-        json_loads = orjson.loads
-        json_dumps = orjson_dumps
+    finish_reason: Optional[str] = None
+    prompt_length: Optional[int] = None
+    completion_length: Optional[int] = None
+    total_length: Optional[int] = None
 
     def __str__(self) -> str:
-        return str(self.dict(exclude_none=True))
+        return str(self.model_dump(exclude_none=True))
 
 
 class ChatSession(BaseModel):
@@ -53,10 +49,6 @@ class ChatSession(BaseModel):
     total_length: int = 0
     title: Optional[str] = None
 
-    class Config:
-        json_loads = orjson.loads
-        json_dumps = orjson_dumps
-
     def __str__(self) -> str:
         sess_start_str = self.created_at.strftime("%Y-%m-%d %H:%M:%S")
         last_message_str = self.messages[-1].received_at.strftime("%Y-%m-%d %H:%M:%S")
@@ -73,12 +65,12 @@ class ChatSession(BaseModel):
             else self.messages
         )
         return (
-            [system_message.dict(include=self.input_fields, exclude_none=True)]
+            [system_message.model_dump(include=self.input_fields, exclude_none=True)]
             + [
-                m.dict(include=self.input_fields, exclude_none=True)
+                m.model_dump(include=self.input_fields, exclude_none=True)
                 for m in recent_messages
             ]
-            + [user_message.dict(include=self.input_fields, exclude_none=True)]
+            + [user_message.model_dump(include=self.input_fields, exclude_none=True)]
         )
 
     def add_messages(

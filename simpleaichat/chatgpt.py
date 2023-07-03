@@ -1,9 +1,10 @@
-from pydantic import HttpUrl
+from pydantic import HttpUrl, ConfigDict
 from httpx import Client, AsyncClient
 from typing import List, Dict, Union, Set, Any
 import orjson
 
 from .models import ChatMessage, ChatSession
+from .utils import remove_a_key
 
 tool_prompt = """From the list of tools below:
 - Reply ONLY with the number of the tool appropriate in response to the user's last message.
@@ -17,6 +18,7 @@ class ChatGPTSession(ChatSession):
     input_fields: Set[str] = {"role", "content", "name"}
     system: str = "You are a helpful assistant."
     params: Dict[str, Any] = {"temperature": 0.7}
+    model_config: ConfigDict(arbitrary_types_allowed=True)
 
     def prepare_request(
         self,
@@ -41,7 +43,9 @@ class ChatGPTSession(ChatSession):
                 prompt, input_schema
             ), f"prompt must be an instance of {input_schema.__name__}"
             user_message = ChatMessage(
-                role="function", content=prompt.json(), name=input_schema.__name__
+                role="function",
+                content=prompt.model_dump_json(),
+                name=input_schema.__name__,
             )
 
         gen_params = params or self.params
@@ -60,7 +64,9 @@ class ChatGPTSession(ChatSession):
                 functions.append(input_function)
             if output_schema:
                 output_function = self.schema_to_function(output_schema)
-                functions.append(output_function) if output_function not in functions else None
+                functions.append(
+                    output_function
+                ) if output_function not in functions else None
                 if is_function_calling_required:
                     data["function_call"] = {"name": output_schema.__name__}
             data["functions"] = functions
@@ -69,10 +75,13 @@ class ChatGPTSession(ChatSession):
 
     def schema_to_function(self, schema: Any):
         assert schema.__doc__, f"{schema.__name__} is missing a docstring."
+        schema_dict = schema.model_json_schema()
+        remove_a_key(schema_dict, "title")
+
         return {
             "name": schema.__name__,
             "description": schema.__doc__,
-            "parameters": schema.schema(),
+            "parameters": schema_dict,
         }
 
     def gen(
