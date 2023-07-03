@@ -33,7 +33,7 @@ class ChatMessage(BaseModel):
         json_dumps = orjson_dumps
 
     def __str__(self) -> str:
-        return str(self.dict(exclude_none=True))
+        return str(self.model_dump(exclude_none=True))
 
 
 class ChatSession(BaseModel):
@@ -73,12 +73,12 @@ class ChatSession(BaseModel):
             else self.messages
         )
         return (
-            [system_message.dict(include=self.input_fields, exclude_none=True)]
+            [system_message.model_dump(include=self.input_fields, exclude_none=True)]
             + [
-                m.dict(include=self.input_fields, exclude_none=True)
+                m.model_dump(include=self.input_fields, exclude_none=True)
                 for m in recent_messages
             ]
-            + [user_message.dict(include=self.input_fields, exclude_none=True)]
+            + [user_message.model_dump(include=self.input_fields, exclude_none=True)]
         )
 
     def add_messages(

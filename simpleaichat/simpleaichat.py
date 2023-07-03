@@ -222,7 +222,7 @@ class AIChat(BaseModel):
 
     def __str__(self) -> str:
         if self.default_session:
-            return self.default_session.json(
+            return self.default_session.model_dump_json(
                 exclude={"api_key", "api_url"},
                 exclude_none=True,
                 option=orjson.OPT_INDENT_2,
@@ -240,7 +240,7 @@ class AIChat(BaseModel):
         minify: bool = False,
     ):
         sess = self.get_session(id)
-        sess_dict = sess.dict(
+        sess_dict = sess.model_dump(
             exclude={"auth", "api_url", "input_fields"},
             exclude_none=True,
         )

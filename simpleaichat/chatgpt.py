@@ -60,7 +60,9 @@ class ChatGPTSession(ChatSession):
                 functions.append(input_function)
             if output_schema:
                 output_function = self.schema_to_function(output_schema)
-                functions.append(output_function) if output_function not in functions else None
+                functions.append(
+                    output_function
+                ) if output_function not in functions else None
                 if is_function_calling_required:
                     data["function_call"] = {"name": output_schema.__name__}
             data["functions"] = functions
