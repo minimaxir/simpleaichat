@@ -1,7 +1,9 @@
-from pydantic import HttpUrl, ConfigDict
-from httpx import Client, AsyncClient
-from typing import List, Dict, Union, Set, Any
+import json
+from typing import Any, Dict, List, Set, Union
+
 import orjson
+from httpx import AsyncClient, Client
+from pydantic import ConfigDict, HttpUrl
 
 from .models import ChatMessage, ChatSession
 from .utils import remove_a_key
@@ -120,7 +122,7 @@ class ChatGPTSession(ChatSession):
                 self.add_messages(user_message, assistant_message, save_messages)
             else:
                 content = r["choices"][0]["message"]["function_call"]["arguments"]
-                content = orjson.loads(content)
+                content = json.loads(content, strict=False)
 
             self.total_prompt_length += r["usage"]["prompt_tokens"]
             self.total_completion_length += r["usage"]["completion_tokens"]
@@ -180,7 +182,6 @@ class ChatGPTSession(ChatSession):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-
         # call 1: select tool and populate context
         tools_list = "\n".join(f"{i+1}: {f.__doc__}" for i, f in enumerate(tools))
         tool_prompt_format = tool_prompt.format(tools=tools_list)
@@ -278,7 +279,7 @@ class ChatGPTSession(ChatSession):
                 self.add_messages(user_message, assistant_message, save_messages)
             else:
                 content = r["choices"][0]["message"]["function_call"]["arguments"]
-                content = orjson.loads(content)
+                content = json.loads(content, strict=False)
 
             self.total_prompt_length += r["usage"]["prompt_tokens"]
             self.total_completion_length += r["usage"]["completion_tokens"]
@@ -336,7 +337,6 @@ class ChatGPTSession(ChatSession):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-
         # call 1: select tool and populate context
         tools_list = "\n".join(f"{i+1}: {f.__doc__}" for i, f in enumerate(tools))
         tool_prompt_format = tool_prompt.format(tools=tools_list)
