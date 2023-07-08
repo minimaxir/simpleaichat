@@ -84,8 +84,8 @@ async def wikipedia_search_lookup_async(query: str, sentences: int = 1) -> str:
     )
 
 
-def fd(description: str):
-    return Field(description=description)
+def fd(description: str, **kwargs):
+    return Field(description=description, **kwargs)
 
 
 # https://stackoverflow.com/a/58938747
