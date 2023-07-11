@@ -123,6 +123,7 @@ class AIChat(BaseModel):
         tools: List[Any] = None,
         input_schema: Any = None,
         output_schema: Any = None,
+        additional_schemas: List[Any] = None,
     ) -> str:
         sess = self.get_session(id)
         if tools:
@@ -146,6 +147,7 @@ class AIChat(BaseModel):
                 params=params,
                 input_schema=input_schema,
                 output_schema=output_schema,
+                additional_schemas=additional_schemas,
             )
 
     def stream(
