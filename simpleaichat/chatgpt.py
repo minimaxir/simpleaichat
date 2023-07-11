@@ -29,7 +29,6 @@ class ChatGPTSession(ChatSession):
         input_schema: Any = None,
         output_schema: Any = None,
         additional_schemas: List[Any] = None,
-        # is_function_calling_required: bool = True,
     ):
         headers = {
             "Content-Type": "application/json",
@@ -68,8 +67,6 @@ class ChatGPTSession(ChatSession):
                 functions.append(
                     output_function
                 ) if output_function not in functions else None
-                # if is_function_calling_required:
-                    # data["function_call"] = {"name": output_schema.__name__}
                 data["function_call"] = {"name": output_schema.__name__}
             if additional_schemas:
                 for schema in additional_schemas:
