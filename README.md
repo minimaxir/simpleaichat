@@ -15,7 +15,7 @@ simpleaichat is a Python package for easily interfacing with chat apps like Chat
 - Minimal codebase: no code dives to figure out what's going on under the hood needed!
 - Chat streaming responses and the ability to use tools.
 - Async support, including for streaming and tools.
-- Ablity to create more complex yet clear workflows if needed, such as Agents. (Demo soon!)
+- Ability to create more complex yet clear workflows if needed, such as Agents. (Demo soon!)
 - Coming soon: more chat model support (PaLM, Claude)!
 
 Here's some fun, hackable examples on how simpleaichat works:
