@@ -99,7 +99,7 @@ class ChatGPTSession(ChatSession):
         )
 
         r = client.post(
-            self.api_url,
+            str(self.api_url),
             json=data,
             headers=headers,
             timeout=None,
@@ -145,7 +145,7 @@ class ChatGPTSession(ChatSession):
 
         with client.stream(
             "POST",
-            self.api_url,
+            str(self.api_url),
             json=data,
             headers=headers,
             timeout=None,
@@ -257,7 +257,7 @@ class ChatGPTSession(ChatSession):
         )
 
         r = await client.post(
-            self.api_url,
+            str(self.api_url),
             json=data,
             headers=headers,
             timeout=None,
@@ -303,7 +303,7 @@ class ChatGPTSession(ChatSession):
 
         async with client.stream(
             "POST",
-            self.api_url,
+            str(self.api_url),
             json=data,
             headers=headers,
             timeout=None,
