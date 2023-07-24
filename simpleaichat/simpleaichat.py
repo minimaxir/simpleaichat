@@ -5,7 +5,7 @@ from uuid import uuid4, UUID
 from contextlib import contextmanager, asynccontextmanager
 import csv
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from httpx import Client, AsyncClient
 from typing import List, Dict, Union, Optional, Any
 import orjson
@@ -23,7 +23,6 @@ class AIChat(BaseModel):
     client: Any
     default_session: Optional[ChatSession]
     sessions: Dict[Union[str, UUID], ChatSession] = {}
-    model_config: ConfigDict(arbitrary_types_allowed=True)
 
     def __init__(
         self,

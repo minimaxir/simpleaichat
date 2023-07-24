@@ -1,4 +1,4 @@
-from pydantic import HttpUrl, ConfigDict
+from pydantic import HttpUrl
 from httpx import Client, AsyncClient
 from typing import List, Dict, Union, Set, Any
 import orjson
@@ -18,7 +18,6 @@ class ChatGPTSession(ChatSession):
     input_fields: Set[str] = {"role", "content", "name"}
     system: str = "You are a helpful assistant."
     params: Dict[str, Any] = {"temperature": 0.7}
-    model_config: ConfigDict(arbitrary_types_allowed=True)
 
     def prepare_request(
         self,
