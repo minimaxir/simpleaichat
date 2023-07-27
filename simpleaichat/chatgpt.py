@@ -93,7 +93,7 @@ class ChatGPTSession(ChatSession):
                     output_function
                 ) if output_function not in functions else None
                 if is_function_calling_required:
-                    data["function_call"] = {"name": output_schema.__name__}
+                    data["function_call"] = "auto" if self.api_type == "azure" else {"name": output_schema.__name__}
             data["functions"] = functions
 
         return headers, data, user_message
@@ -179,12 +179,13 @@ class ChatGPTSession(ChatSession):
             timeout=None,
         ) as r:
             content = []
-            for chunk in r.iter_lines():
+            iter_lines = r.iter_lines()
+            for chunk in iter_lines:
                 if len(chunk) > 0:
-                    chunk = chunk[6:]  # SSE JSON chunks are prepended with "data: "
+                    chunk = chunk if self.api_type == "azure" else chunk[6:]  # SSE JSON chunks are prepended with "data: "
                     if chunk != "[DONE]":
                         chunk_dict = orjson.loads(chunk)
-                        delta = chunk_dict["choices"][0]["delta"].get("content")
+                        delta = chunk_dict["choices"][0]["message"].get("content") if self.api_type == "azure" else chunk_dict["choices"][0]["delta"].get("content")
                         if delta:
                             content.append(delta)
                             yield {"delta": delta, "response": "".join(content)}
