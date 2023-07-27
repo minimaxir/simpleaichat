@@ -93,7 +93,7 @@ class ChatGPTSession(ChatSession):
                     output_function
                 ) if output_function not in functions else None
                 if is_function_calling_required:
-                    data["function_call"] = "auto" if self.api_type == "azure" else {"name": output_schema.__name__}
+                    data["function_call"] = {"name": output_schema.__name__}
             data["functions"] = functions
 
         return headers, data, user_message
