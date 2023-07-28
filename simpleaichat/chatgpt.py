@@ -173,8 +173,7 @@ class ChatGPTSession(ChatSession):
             timeout=None,
         ) as r:
             content = []
-            iter_lines = r.iter_lines()
-            for chunk in iter_lines:
+            for chunk in r.iter_lines():
                 if len(chunk) > 0:
                     chunk = chunk[6:]  # SSE JSON chunks are prepended with "data: "
                     if chunk != "[DONE]":
