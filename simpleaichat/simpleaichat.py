@@ -76,6 +76,11 @@ class AIChat(BaseModel):
                 },
                 **kwargs,
             )
+        else:
+            sess = ChatGPTSession(
+                **kwargs,
+                auth={}
+            )
 
         if return_session:
             return sess

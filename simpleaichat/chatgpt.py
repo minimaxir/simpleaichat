@@ -31,7 +31,7 @@ class ChatGPTSession(ChatSession):
     ):
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
+            "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}" if 'api_key' in self.auth else "",
         }
 
         system_message = ChatMessage(role="system", content=system or self.system)
