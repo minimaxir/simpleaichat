@@ -22,15 +22,7 @@ class ChatGPTSession(ChatSession):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.api_type = kwargs.get("api_type", "openai")
-        self.api_endpoint = kwargs.get("api_endpoint", "https://api.openai.com/v1/chat/completions")
-
-    @property
-    def api_endpoint(self) -> HttpUrl:
-        return self.api_url
-    
-    @api_endpoint.setter
-    def api_endpoint(self, value: HttpUrl):
-        self.api_url = value
+        self.api_url = kwargs.get("api_endpoint", "https://api.openai.com/v1/chat/completions")
 
     def prepare_request(
         self,
