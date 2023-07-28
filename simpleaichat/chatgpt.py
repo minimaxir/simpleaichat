@@ -61,7 +61,9 @@ class ChatGPTSession(ChatSession):
         gen_params = params or self.params
         if self.api_type == "azure":
             data = {
+                "model": self.model,
                 "messages": self.format_input_messages(system_message, user_message),
+                "stream": stream,
                 **gen_params
             }
         else:
@@ -174,10 +176,10 @@ class ChatGPTSession(ChatSession):
             iter_lines = r.iter_lines()
             for chunk in iter_lines:
                 if len(chunk) > 0:
-                    chunk = chunk if self.api_type == "azure" else chunk[6:]  # SSE JSON chunks are prepended with "data: "
+                    chunk = chunk[6:]  # SSE JSON chunks are prepended with "data: "
                     if chunk != "[DONE]":
                         chunk_dict = orjson.loads(chunk)
-                        delta = chunk_dict["choices"][0]["message"].get("content") if self.api_type == "azure" else chunk_dict["choices"][0]["delta"].get("content")
+                        delta = chunk_dict["choices"][0]["delta"].get("content") if len(chunk_dict["choices"]) > 0 else None
                         if delta:
                             content.append(delta)
                             yield {"delta": delta, "response": "".join(content)}
