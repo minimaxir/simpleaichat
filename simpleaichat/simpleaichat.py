@@ -192,7 +192,7 @@ class AIChat(BaseModel):
             return default
 
     def interactive_console(self, character: str = None, prime: bool = True) -> None:
-        console = Console(highlight=False)
+        console = Console(highlight=False, force_jupyter=False)
         sess = self.default_session
         ai_text_color = "bright_magenta"
 
