@@ -59,7 +59,7 @@ class ChatGPTSession(ChatSession):
             )
 
         gen_params = params or self.params
-        data ={
+        data = {
             "model": self.model,
             "messages": self.format_input_messages(system_message, user_message),
             "stream": stream,
