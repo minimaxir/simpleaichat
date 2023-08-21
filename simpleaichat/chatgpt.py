@@ -59,20 +59,12 @@ class ChatGPTSession(ChatSession):
             )
 
         gen_params = params or self.params
-        if self.api_type == "azure":
-            data = {
-                "model": self.model,
-                "messages": self.format_input_messages(system_message, user_message),
-                "stream": stream,
-                **gen_params
-            }
-        else:
-            data ={
-                "model": self.model,
-                "messages": self.format_input_messages(system_message, user_message),
-                "stream": stream,
-                **gen_params,
-            }
+        data ={
+            "model": self.model,
+            "messages": self.format_input_messages(system_message, user_message),
+            "stream": stream,
+            **gen_params
+        }
 
 
         # Add function calling parameters if a schema is provided
