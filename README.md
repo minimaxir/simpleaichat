@@ -1,4 +1,4 @@
-# FORK OF simpleaichat at https://github.com/minimaxir/simpleaichat/
+# simpleaichat
 
 ```py3
 from simpleaichat import AIChat

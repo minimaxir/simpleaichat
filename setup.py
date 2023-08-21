@@ -3,13 +3,13 @@ from setuptools import setup
 setup(
     name="simpleaichat",
     packages=["simpleaichat"],  # this must be the same as the name above
-    version="0.2.3",
-    description="fork of A Python package for easily interfacing with chat apps, with robust features and minimal code complexity.",
+    version="0.2.2",
+    description="A Python package for easily interfacing with chat apps, with robust features and minimal code complexity.",
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    author="Max Woolf, V.C",
-    author_email="venkatesh.cv@gmail.com",
-    url="https://github.com/venkatesh-cv/simpleaichat",
+    author="Max Woolf",
+    author_email="max@minimaxir.com",
+    url="https://github.com/minimaxir/simpleaichat",
     keywords=["chatgpt", "openai", "text generation", "ai"],
     classifiers=[],
     license="MIT",
