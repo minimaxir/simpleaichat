@@ -24,6 +24,7 @@ setup(
         "python-dotenv>=1.0.0",
         "orjson>=3.9.0",
         "rich>=13.4.1",
+        "litellm>=0.1.400",
         "python-dateutil>=2.8.2",
     ],
 )

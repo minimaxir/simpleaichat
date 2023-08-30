@@ -5,6 +5,7 @@ import orjson
 
 from .models import ChatMessage, ChatSession
 from .utils import remove_a_key
+from litellm import completion
 
 tool_prompt = """From the list of tools below:
 - Reply ONLY with the number of the tool appropriate in response to the user's last message.
@@ -100,14 +101,12 @@ class ChatGPTSession(ChatSession):
             prompt, system, params, False, input_schema, output_schema
         )
 
-        r = client.post(
-            str(self.api_url),
-            json=data,
-            headers=headers,
-            timeout=None,
+        # API Keys can be set in .env or passed to litellm
+        # eg. if using .env set os.environ['OPENAI_API_KEY']
+        r = completion(
+            **data,
+            api_key=self.auth['api_key'].get_secret_value()
         )
-        r = r.json()
-
         try:
             if not output_schema:
                 content = r["choices"][0]["message"]["content"]
