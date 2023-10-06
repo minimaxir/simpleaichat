@@ -249,6 +249,7 @@ class AIChat(BaseModel):
                     "prompt_length",
                     "completion_length",
                     "total_length",
+                    "finish_reason",
                 ]
                 w = csv.DictWriter(f, fieldnames=fields)
                 w.writeheader()
