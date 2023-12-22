@@ -125,6 +125,8 @@ class AIChat(BaseModel):
     ) -> str:
         sess = self.get_session(id)
         if tools:
+            assert (input_schema is None) and (output_schema is None), \
+                "When using tools, input/output schema are ignored"
             for tool in tools:
                 assert tool.__doc__, f"Tool {tool} does not have a docstring."
             assert len(tools) <= 9, "You can only have a maximum of 9 tools."
@@ -342,6 +344,8 @@ class AsyncAIChat(AIChat):
             self.client = AsyncClient(proxies=os.getenv("https_proxy"))
         sess = self.get_session(id)
         if tools:
+            assert (input_schema is None) and (output_schema is None), \
+                "When using tools, input/output schema are ignored"
             for tool in tools:
                 assert tool.__doc__, f"Tool {tool} does not have a docstring."
             assert len(tools) <= 9, "You can only have a maximum of 9 tools."
