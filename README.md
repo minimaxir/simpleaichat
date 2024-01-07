@@ -278,6 +278,16 @@ ai("Thanks for your help!", tools=[search, lookup])
  'tool': None}
 ```
 
+## Using Azure OpenAI Service
+To use Azure OpenAI with `simpleaichat`, set the `SIMPLEAICHAT_API_URL` environment variable to your specific Azure OpenAI API URL.
+Do not forget to use your Azure OpenAI API key as the `api_key` parameter when instantiating `AIChat`.
+
+```bash
+    export SIMPLEAICHAT_API_URL=https://custom.openai.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2023-07-01-preview
+```
+
+All other settings align with standard OpenAI examples. For further details, consult the [Azure OpenAI documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/chatgpt-quickstart?tabs=command-line&pivots=rest-api).
+
 ## Miscellaneous Notes
 
 - Like [gpt-2-simple](https://github.com/minimaxir/gpt-2-simple) before it, the primary motivation behind releasing simpleaichat is to both democratize access to ChatGPT even more and also offer more transparency for non-engineers into how Chat AI-based apps work under the hood given the disproportionate amount of media misinformation about their capabilities. This is inspired by real-world experience from [my work with BuzzFeed](https://tech.buzzfeed.com/the-right-tools-for-the-job-c05de96e949e) in the domain, where after spending a long time working with the popular [LangChain](https://github.com/hwchase17/langchain), a more-simple implementation was both much easier to maintain and resulted in much better generations. I began focusing development on simpleaichat after reading a [Hacker News thread](https://news.ycombinator.com/item?id=35820931) filled with many similar complaints, indicating value for an easier-to-use interface for modern AI tricks.

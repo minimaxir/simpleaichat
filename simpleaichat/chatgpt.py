@@ -1,3 +1,5 @@
+import os
+
 from pydantic import HttpUrl
 from httpx import Client, AsyncClient
 from typing import List, Dict, Union, Set, Any
@@ -12,9 +14,10 @@ tool_prompt = """From the list of tools below:
 
 {tools}"""
 
+OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 
 class ChatGPTSession(ChatSession):
-    api_url: HttpUrl = "https://api.openai.com/v1/chat/completions"
+    api_url: HttpUrl = os.getenv("SIMPLEAICHAT_API_URL", OPENAI_API_URL)
     input_fields: Set[str] = {"role", "content", "name"}
     system: str = "You are a helpful assistant."
     params: Dict[str, Any] = {"temperature": 0.7}
@@ -31,8 +34,14 @@ class ChatGPTSession(ChatSession):
     ):
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
         }
+        api_key = self.auth["api_key"].get_secret_value()
+
+        # OpenAI and Azure use different auth headers
+        if self.api_url == OPENAI_API_URL:
+            headers["Authorization"] = f"Bearer {api_key}"
+        else:
+            headers["api-key"] = api_key
 
         system_message = ChatMessage(role="system", content=system or self.system)
         if not input_schema:
