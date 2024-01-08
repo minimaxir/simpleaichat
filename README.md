@@ -278,6 +278,18 @@ ai("Thanks for your help!", tools=[search, lookup])
  'tool': None}
 ```
 
+Azure OpenAI
+Here is how Azure open ai can be initialized. Rest of it is all the same as the openai examples given above
+```
+    ai = AIChat(
+        api_key=[api_key], 
+        api_version=[api_version], # make sure to use the latest api version if you are trying out function calling
+        model=[chat_engine], # make sure to use a new deployment if you are trying function calling.
+        api_type="azure"
+        api_endpoint="your custom azure openapi endpoint goes here. This needs to be the full chat completions URL not just the base URL"
+        system=[system_instructions])
+```
+
 ## Miscellaneous Notes
 
 - Like [gpt-2-simple](https://github.com/minimaxir/gpt-2-simple) before it, the primary motivation behind releasing simpleaichat is to both democratize access to ChatGPT even more and also offer more transparency for non-engineers into how Chat AI-based apps work under the hood given the disproportionate amount of media misinformation about their capabilities. This is inspired by real-world experience from [my work with BuzzFeed](https://tech.buzzfeed.com/the-right-tools-for-the-job-c05de96e949e) in the domain, where after spending a long time working with the popular [LangChain](https://github.com/hwchase17/langchain), a more-simple implementation was both much easier to maintain and resulted in much better generations. I began focusing development on simpleaichat after reading a [Hacker News thread](https://news.ycombinator.com/item?id=35820931) filled with many similar complaints, indicating value for an easier-to-use interface for modern AI tricks.

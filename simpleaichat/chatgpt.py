@@ -20,6 +20,11 @@ class ChatGPTSession(ChatSession):
     system: str = "You are a helpful assistant."
     params: Dict[str, Any] = {"temperature": 0.7}
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.api_type = kwargs.get("api_type", "openai")
+        self.api_url = kwargs.get("api_endpoint", "https://api.openai.com/v1/chat/completions")
+
     def prepare_request(
         self,
         prompt: str,
@@ -30,10 +35,16 @@ class ChatGPTSession(ChatSession):
         output_schema: Any = None,
         is_function_calling_required: bool = True,
     ):
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
-        }
+        if(self.api_type == "azure"):
+            headers = {
+                "Content-Type": "application/json",
+                "api-key": self.auth['api_key'].get_secret_value(),
+            }
+        else:
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.auth['api_key'].get_secret_value()}",
+            }
 
         system_message = ChatMessage(role="system", content=system or self.system)
         if not input_schema:
@@ -53,8 +64,9 @@ class ChatGPTSession(ChatSession):
             "model": self.model,
             "messages": self.format_input_messages(system_message, user_message),
             "stream": stream,
-            **gen_params,
+            **gen_params
         }
+
 
         # Add function calling parameters if a schema is provided
         if input_schema or output_schema:
@@ -159,7 +171,7 @@ class ChatGPTSession(ChatSession):
                     chunk = chunk[6:]  # SSE JSON chunks are prepended with "data: "
                     if chunk != "[DONE]":
                         chunk_dict = orjson.loads(chunk)
-                        delta = chunk_dict["choices"][0]["delta"].get("content")
+                        delta = chunk_dict["choices"][0]["delta"].get("content") if len(chunk_dict["choices"]) > 0 else None
                         if delta:
                             content.append(delta)
                             yield {"delta": delta, "response": "".join(content)}

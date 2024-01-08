@@ -48,6 +48,11 @@ class ChatSession(BaseModel):
     total_completion_length: int = 0
     total_length: int = 0
     title: Optional[str] = None
+    api_type:str
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.api_type = kwargs.get("api_type", "openai")
 
     def __str__(self) -> str:
         sess_start_str = self.created_at.strftime("%Y-%m-%d %H:%M:%S")
