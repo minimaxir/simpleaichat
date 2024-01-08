@@ -221,7 +221,6 @@ class AIChat(BaseModel):
             return self.default_session.model_dump_json(
                 exclude={"api_key", "api_url"},
                 exclude_none=True,
-                option=orjson.OPT_INDENT_2,
             )
 
     def __repr__(self) -> str:
