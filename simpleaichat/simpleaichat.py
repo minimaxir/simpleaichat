@@ -1,20 +1,20 @@
-import os
-import datetime
-import dateutil
-from uuid import uuid4, UUID
-from contextlib import contextmanager, asynccontextmanager
 import csv
+import datetime
+import os
+from contextlib import asynccontextmanager, contextmanager
+from typing import Any, Dict, List, Optional, Union
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel
-from httpx import Client, AsyncClient
-from typing import List, Dict, Union, Optional, Any
+import dateutil
 import orjson
 from dotenv import load_dotenv
+from httpx import AsyncClient, Client
+from pydantic import BaseModel
 from rich.console import Console
 
-from .utils import wikipedia_search_lookup
-from .models import ChatMessage, ChatSession
 from .chatgpt import ChatGPTSession
+from .models import ChatMessage, ChatSession
+from .utils import wikipedia_search_lookup
 
 load_dotenv()
 
@@ -35,7 +35,6 @@ class AIChat(BaseModel):
         console: bool = True,
         **kwargs,
     ):
-
         client = Client(proxies=os.getenv("https_proxy"))
         system_format = self.build_system(character, character_command, system)
 
@@ -63,7 +62,6 @@ class AIChat(BaseModel):
         return_session: bool = False,
         **kwargs,
     ) -> Optional[ChatGPTSession]:
-
         if "model" not in kwargs:  # set default
             kwargs["model"] = "gpt-3.5-turbo"
         # TODO: Add support for more models (PaLM, Claude)
@@ -125,8 +123,9 @@ class AIChat(BaseModel):
     ) -> str:
         sess = self.get_session(id)
         if tools:
-            assert (input_schema is None) and (output_schema is None), \
-                "When using tools, input/output schema are ignored"
+            assert (input_schema is None) and (
+                output_schema is None
+            ), "When using tools, input/output schema are ignored"
             for tool in tools:
                 assert tool.__doc__, f"Tool {tool} does not have a docstring."
             assert len(tools) <= 9, "You can only have a maximum of 9 tools."
@@ -272,7 +271,6 @@ class AIChat(BaseModel):
                 )
 
     def load_session(self, input_path: str, id: Union[str, UUID] = uuid4(), **kwargs):
-
         assert input_path.endswith(".csv") or input_path.endswith(
             ".json"
         ), "Only CSV and JSON imports are accepted."
@@ -344,8 +342,9 @@ class AsyncAIChat(AIChat):
             self.client = AsyncClient(proxies=os.getenv("https_proxy"))
         sess = self.get_session(id)
         if tools:
-            assert (input_schema is None) and (output_schema is None), \
-                "When using tools, input/output schema are ignored"
+            assert (input_schema is None) and (
+                output_schema is None
+            ), "When using tools, input/output schema are ignored"
             for tool in tools:
                 assert tool.__doc__, f"Tool {tool} does not have a docstring."
             assert len(tools) <= 9, "You can only have a maximum of 9 tools."

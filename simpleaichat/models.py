@@ -1,9 +1,9 @@
 import datetime
-from uuid import uuid4, UUID
+from typing import Any, Dict, List, Optional, Set, Union
+from uuid import UUID, uuid4
 
-from pydantic import BaseModel, SecretStr, HttpUrl, Field
-from typing import List, Dict, Union, Optional, Set, Any
 import orjson
+from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
 
 def orjson_dumps(v, *, default, **kwargs):
@@ -79,7 +79,6 @@ class ChatSession(BaseModel):
         assistant_message: ChatMessage,
         save_messages: bool = None,
     ) -> None:
-
         # if save_messages is explicitly defined, always use that choice
         # instead of the default
         to_save = isinstance(save_messages, bool)

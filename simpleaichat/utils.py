@@ -1,6 +1,7 @@
 import os
-import httpx
 from typing import List, Union
+
+import httpx
 from pydantic import Field
 
 WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php"

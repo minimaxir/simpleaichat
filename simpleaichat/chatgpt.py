@@ -1,7 +1,8 @@
-from pydantic import HttpUrl
-from httpx import Client, AsyncClient
-from typing import List, Dict, Union, Set, Any
+from typing import Any, Dict, List, Set, Union
+
 import orjson
+from httpx import AsyncClient, Client
+from pydantic import HttpUrl
 
 from .models import ChatMessage, ChatSession
 from .utils import remove_a_key
@@ -182,7 +183,6 @@ class ChatGPTSession(ChatSession):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-
         # call 1: select tool and populate context
         tools_list = "\n".join(f"{i+1}: {f.__doc__}" for i, f in enumerate(tools))
         tool_prompt_format = tool_prompt.format(tools=tools_list)
@@ -338,7 +338,6 @@ class ChatGPTSession(ChatSession):
         save_messages: bool = None,
         params: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-
         # call 1: select tool and populate context
         tools_list = "\n".join(f"{i+1}: {f.__doc__}" for i, f in enumerate(tools))
         tool_prompt_format = tool_prompt.format(tools=tools_list)
